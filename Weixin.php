@@ -9,13 +9,11 @@ use doyzheng\weixin\core\Helper;
 /**
  * Class Weixin
  * @package doyzheng\weixin
- * // 核心类
  * @property core\AccessToken $accessToken
  * @property core\Cache       $cache
  * @property core\Log         $log
  * @property core\Request     $request
  * @property core\Exception   $exception
- * // 项目模块
  * @property mp\Module        $mp
  * @property open\Module      $open
  * @property mini\Module      $mini
@@ -27,7 +25,7 @@ class Weixin extends BaseObject
     /**
      * @var string 版本号
      */
-    private static $version = '18.11.20';
+    private static $version = '1.1';
     
     /**
      * @var bool
@@ -43,7 +41,7 @@ class Weixin extends BaseObject
      * @var string
      */
     public $runtimePath;
-
+    
     /**
      * Weixin constructor.
      * @param array $config
@@ -78,7 +76,7 @@ class Weixin extends BaseObject
             $this->runtimePath = Helper::mkdir(__DIR__ . '/../../../runtime/weixin');
         }
     }
-
+    
     /**
      * 获取版本号
      * @return string
