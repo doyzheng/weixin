@@ -2,7 +2,7 @@
 
 namespace doyzheng\weixin\parking;
 
-use doyzheng\weixin\core\Helper;
+use doyzheng\weixin\base\Helper;
 use doyzheng\weixin\base\BaseModule;
 
 /**
@@ -58,19 +58,19 @@ class Module extends BaseModule
     public function __construct($config)
     {
         if (empty($config['appid'])) {
-            $this->exception->invalidArgument('公众账号不能为空: appid');
+            $this->app->exception->invalidArgument('公众账号不能为空: appid');
         }
         if (empty($config['key'])) {
-            $this->exception->invalidArgument('商户平台密钥不能为空: key');
+            $this->app->exception->invalidArgument('商户平台密钥不能为空: key');
         }
         if (empty($config['mch_id'])) {
-            $this->exception->invalidArgument('服务商商户号不能为空: mch_id');
+            $this->app->exception->invalidArgument('服务商商户号不能为空: mch_id');
         }
         if (empty($config['sub_app_id'])) {
-            $this->exception->invalidArgument('子商户公众账号不能为空: sub_app_id');
+            $this->app->exception->invalidArgument('子商户公众账号不能为空: sub_app_id');
         }
         if (empty($config['sub_mch_id'])) {
-            $this->exception->invalidArgument('子服务商商户号不能为空: sub_mch_id');
+            $this->app->exception->invalidArgument('子服务商商户号不能为空: sub_mch_id');
         }
         parent::__construct($config);
     }
@@ -104,38 +104,38 @@ class Module extends BaseModule
     public function payApply($params)
     {
         if (empty($params['out_trade_no'])) {
-            return $this->exception->invalidArgument('商户订单号不能为空: out_trade_no');
+            return $this->app->exception->invalidArgument('商户订单号不能为空: out_trade_no');
         }
         if (empty($params['total_fee'])) {
-            return $this->exception->invalidArgument('商户订单号不能为空(单位为分): total_fee');
+            return $this->app->exception->invalidArgument('商户订单号不能为空(单位为分): total_fee');
         }
         if (empty($params['start_time'])) {
-            return $this->exception->invalidArgument('用户进入停车时间不能为空(格式为yyyyMMddHHmmss): start_time');
+            return $this->app->exception->invalidArgument('用户进入停车时间不能为空(格式为yyyyMMddHHmmss): start_time');
         }
         if (empty($params['end_time'])) {
             $params['end_time'] = '';
         }
         if (empty($params['charging_time'])) {
-            return $this->exception->invalidArgument('计费的时间长不能为空(单位为秒): charging_time');
+            return $this->app->exception->invalidArgument('计费的时间长不能为空(单位为秒): charging_time');
         }
         if (empty($params['plate_number'])) {
-            return $this->exception->invalidArgument('车牌号不能为空: plate_number');
+            return $this->app->exception->invalidArgument('车牌号不能为空: plate_number');
         }
         if (empty($params['car_type'])) {
             $params['car_type'] = '小型车';
         }
         if (empty($params['parking_name'])) {
-            return $this->exception->invalidArgument('所在停车场的名称不能为空: parking_name');
+            return $this->app->exception->invalidArgument('所在停车场的名称不能为空: parking_name');
         }
         if (empty($params['create_ip'])) {
             if (empty($_SERVER['SERVER_ADDR'])) {
-                return $this->exception->invalidArgument('请求客户IP不能为空: create_ip');
+                return $this->app->exception->invalidArgument('请求客户IP不能为空: create_ip');
             } else {
                 $params['create_ip'] = $_SERVER['SERVER_ADDR'];
             }
         }
         if (empty($params['notify_url'])) {
-            return $this->exception->invalidArgument('微信支付异步通知地址不能为空: notify_url');
+            return $this->app->exception->invalidArgument('微信支付异步通知地址不能为空: notify_url');
         }
         $data = array(
             'body'             => '停车场无感支付测试',//商品描述
@@ -205,7 +205,7 @@ class Module extends BaseModule
     }
     
     /**
-     *  curl POST
+     * curl POST
      * @param     $url
      * @param     $data
      * @return array|string
@@ -225,20 +225,16 @@ class Module extends BaseModule
         // 生成签名
         $data['sign'] = Helper::makeSignSha256($data, $this->key);
         // 发送请求数据
-        $result = $this->request->postXml($url, $data);
-        
-        if ($data = $result->parseXml()) {
-            // 业务受理失败
-            if ($data['return_code'] != 'SUCCESS') {
-                return $this->exception->error($data['return_msg']);
-            }
-            // 处理结果失败
-            if ($data['result_code'] != 'SUCCESS') {
-                return $this->exception->error($data['err_code_des']);
-            }
-            return $data;
+        $result = $this->app->request->postXml($url, $data);
+        // 业务受理失败
+        if ($result->returnCode != 'SUCCESS') {
+            return $this->app->exception->request($result->returnCode);
         }
-        
-        return $result->content;
+        // 处理结果失败
+        if ($result->resultCode != 'SUCCESS') {
+            return $this->app->exception->request($result->resultCode);
+        }
+        return $result->data();
     }
+    
 }

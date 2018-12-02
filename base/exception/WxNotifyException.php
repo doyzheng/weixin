@@ -1,11 +1,11 @@
 <?php
 
-namespace doyzheng\weixin\core\exception;
+namespace doyzheng\weixin\base\exception;
 
 /**
  * 微信异步通知异常
  * Class WxNotifyException
- * @package doyzheng\weixin\core\exception
+ * @package doyzheng\weixin\base\exception
  */
 class WxNotifyException extends BaseException
 {

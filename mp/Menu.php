@@ -2,7 +2,7 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
+use doyzheng\weixin\base\NotifyTrait;
 
 /**
  * 自定义菜单
@@ -10,7 +10,7 @@ use doyzheng\weixin\base\BaseWeixin;
  * @package doyzheng\weixin\mp\js
  * @link    https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141013
  */
-class Menu extends BaseWeixin
+class Menu extends Module
 {
     
     // 点击菜单拉取消息时的事件推送
@@ -37,6 +37,8 @@ class Menu extends BaseWeixin
     // 删除菜单
     const API_DELETE = 'https://api.weixin.qq.com/cgi-bin/menu/delete?access_token=';
     
+    use NotifyTrait;
+    
     /**
      * 创建菜单
      * @param $button
@@ -44,7 +46,7 @@ class Menu extends BaseWeixin
      */
     public function create($button)
     {
-        $url = self::API_CREATE . $this->accessToken;
+        $url = self::API_CREATE . $this->getAccessToken();
         return $this->api($url, 'POST', ['button' => $button]);
     }
     
@@ -54,7 +56,7 @@ class Menu extends BaseWeixin
      */
     public function get()
     {
-        $url = self::API_GET . $this->accessToken;
+        $url = self::API_GET . $this->getAccessToken();
         return $this->api($url);
     }
     
@@ -65,7 +67,7 @@ class Menu extends BaseWeixin
      */
     public function delete()
     {
-        $url = self::API_DELETE . $this->accessToken;
+        $url = self::API_DELETE . $this->getAccessToken();
         return $this->api($url);
     }
     
@@ -77,16 +79,13 @@ class Menu extends BaseWeixin
      */
     public function event($event, $callback)
     {
-        $data = $this->request->getRawDataXml();
-        
+        $data = self::getRawDataXml();
         if (empty($data)) {
-            return $this->exception->logic('事件推送消息数据为空');
+            return $this->app->exception->notify('事件推送消息数据为空');
         }
-        
         if ($data['Event'] == $event) {
             return call_user_func_array($callback, [$data]);
         }
-        
         return false;
     }
     
@@ -94,20 +93,19 @@ class Menu extends BaseWeixin
      * @param string $url
      * @param string $method
      * @param array  $params
-     * @return array|mixed
+     * @return array
      */
     public function api($url, $method = 'GET', $params = [])
     {
         if ($method == 'GET') {
-            $result = $this->request->getJson($url);
+            $result = $this->app->request->get($url);
         } else {
-            $result = $this->request->postJson($url, $params)->parseJson();
+            $result = $this->app->request->post($url, $params);
         }
-        
-        if (isset($result['errcode']) && $result['errcode'] != '0') {
-            return $this->exception->error($result['errmsg'], $result['errcode']);
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result;
+        return $result->data();
     }
     
 }

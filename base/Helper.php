@@ -1,6 +1,6 @@
 <?php
 
-namespace doyzheng\weixin\core;
+namespace doyzheng\weixin\base;
 
 /**
  * 助手类
@@ -57,6 +57,19 @@ class Helper
     }
     
     /**
+     * 获取当前的请求的url地址
+     * @return string
+     */
+    public static function getSelfUrl()
+    {
+        $sys_protocal = isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443' ? 'https://' : 'http://';
+        $php_self     = $_SERVER['PHP_SELF'] ? $_SERVER['PHP_SELF'] : $_SERVER['SCRIPT_NAME'];
+        $path_info    = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '';
+        $relate_url   = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $php_self . (isset($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : $path_info);
+        return $sys_protocal . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '') . $relate_url;
+    }
+    
+    /**
      * 判断是否为xml数据
      * @param string $xmlStr
      * @return bool
@@ -90,16 +103,16 @@ class Helper
      */
     public static function jsonDecode($json, $assoc = true)
     {
-        $json = trim($json);
-        
+        if (!is_string($json)) {
+            return [];
+        }
         if (empty($json)) {
             return [];
         }
-        
+        $json = trim($json);
         if (substr($json, 0, 1) != '{') {
             return [];
         }
-        
         if (substr($json, -1, 1) != '}') {
             return [];
         }
@@ -246,18 +259,30 @@ class Helper
         return $default;
     }
     
+    /**
+     * 获取客户端Ip
+     * @return string
+     */
     public static function getClientIp()
     {
-        if ($_SERVER['REMOTE_ADDR']) {
-            $cip = $_SERVER['REMOTE_ADDR'];
+        if (isset($_SERVER['REMOTE_ADDR'])) {
+            $ip = $_SERVER['REMOTE_ADDR'];
         } elseif (getenv("REMOTE_ADDR")) {
-            $cip = getenv("REMOTE_ADDR");
+            $ip = getenv("REMOTE_ADDR");
         } elseif (getenv("HTTP_CLIENT_IP")) {
-            $cip = getenv("HTTP_CLIENT_IP");
+            $ip = getenv("HTTP_CLIENT_IP");
         } else {
-            $cip = "";
+            $ip = "";
         }
-        return $cip;
+        return $ip;
+    }
+    
+    /**
+     * 获取服务器Ip
+     */
+    public static function getServiceIp()
+    {
+    
     }
     
     /**
@@ -304,7 +329,7 @@ class Helper
      * @param bool $recursive
      * @return bool
      */
-    private static function createDirectory($path, $mode = 0775, $recursive = true)
+    private static function createDirectory($path, $mode = 0777, $recursive = true)
     {
         if (is_dir($path)) {
             return true;

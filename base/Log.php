@@ -1,15 +1,26 @@
 <?php
 
-namespace doyzheng\weixin\core;
+namespace doyzheng\weixin\base;
 
-use doyzheng\weixin\base\BaseLog;
+use doyzheng\weixin\base\interfaces\LogInterface;
 
 /**
+ * 日志处理类
  * Class Log
- * @package doyzheng\weixin\core
+ * @package doyzheng\weixin\base
  */
-class Log extends BaseLog
+class Log extends BaseObject implements LogInterface
 {
+    
+    /**
+     * @var string 日志保存目录
+     */
+    public $savePath;
+    
+    /**
+     * @var bool 是否禁用日志
+     */
+    public $disable = true;
     
     /**
      * 初始化
@@ -17,14 +28,14 @@ class Log extends BaseLog
     public function init()
     {
         if (!$this->savePath) {
-            $this->savePath = Helper::mkdir($this->container->weixin->runtimePath . '/logs');
+            $this->savePath = Helper::mkdir($this->app->runtimePath . '/logs');
         }
     }
     
     /**
      * 添加日志数
-     * @param string $type
-     * @param mixed  $data
+     * @param string       $type
+     * @param array|string $data
      * @return bool
      */
     public function add($type, $data)
@@ -41,39 +52,23 @@ class Log extends BaseLog
     }
     
     /**
-     * 请求异常日志
+     * 请求日志
      * @param array $data
-     * @return bool|mixed
+     * @return bool
      */
-    public function weixinError($data)
+    public function request($data)
     {
-        return $this->add('weixin_error', $data);
+        return $this->add('request', $data);
     }
     
     /**
      * 异常日志
      * @param \Exception $exception
-     * @return bool|mixed
+     * @return bool
      */
     public function error($exception)
     {
-        return $this->add('error', [
-            'Message'   => $exception->getMessage(),
-            'Line'      => $exception->getLine(),
-            'Code'      => $exception->getCode(),
-            'File'      => $exception->getFile(),
-            'Exception' => $exception,
-        ]);
-    }
-    
-    /**
-     * 请求日志
-     * @param array $data
-     * @return bool|mixed
-     */
-    public function request($data)
-    {
-        return $this->add('request', $data);
+        return $this->add('error', (string)$exception);
     }
     
     /**

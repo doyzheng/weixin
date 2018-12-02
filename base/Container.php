@@ -1,9 +1,7 @@
 <?php
 
-namespace doyzheng\weixin\core;
+namespace doyzheng\weixin\base;
 
-use doyzheng\weixin\base\BaseObject;
-use doyzheng\weixin\base\BaseWeixin;
 use doyzheng\weixin\Weixin;
 
 /**
@@ -21,10 +19,15 @@ class Container
     private $_instances = [];
     
     /**
-     * 自定义类包
+     * 类名映射数组
      * @var array
      */
-    public $class = [];
+    public $classMap = [];
+    
+    /**
+     * @var array
+     */
+    public $config = [];
     
     /**
      * @var Weixin
@@ -33,13 +36,14 @@ class Container
     
     /**
      * Container constructor.
-     * @param $class
-     * @param $config
+     * @param array $class
+     * @param array $config 全局配置
      */
-    public function __construct($weixin, $class = [])
+    public function __construct($weixin, $classMap = [], $config = [])
     {
-        $this->class  = $class;
-        $this->weixin = $weixin;
+        $this->weixin   = $weixin;
+        $this->classMap = $classMap;
+        $this->config   = $config;
     }
     
     /**
@@ -49,25 +53,26 @@ class Container
      */
     public function get($name)
     {
-        // 是否缓存实例
+        // 检查这个对象是否已经创建
         if (isset($this->_instances[$name])) {
             return $this->_instances[$name];
         }
-        
-        if (isset($this->class[$name])) {
-            $className = $this->class[$name];
+        // 检查对象名是否在类名映射数组中
+        if (isset($this->classMap[$name])) {
+            $className = $this->classMap[$name];
         } else {
             $className = $name;
         }
-        
+        // 如果类存在，去实例化
         if (class_exists($className)) {
-            $config = array_merge($this->weixin->config, ['container' => $this]);
+            $config = array_merge($this->config, ['app' => $this->weixin]);
+            // 实例这个类
             $class = new $className($config);
+            // 这个类必须继承BaseObject
             if ($class instanceof BaseObject) {
                 $this->_instances[$name] = $class;
             }
         }
-        
         if (isset($this->_instances[$name])) {
             return $this->_instances[$name];
         }
@@ -75,15 +80,18 @@ class Container
     }
     
     /**
-     * 设置容器实例
+     * 设置容器中的对象
      * @param $name
      * @param $value
-     * @return mixed
+     * @return bool
      */
-    public function set($name, $value)
+    public function set($name, $object)
     {
-        $this->_instances[$name] = $value;
-        return true;
+        if ($object instanceof BaseObject) {
+            $this->_instances[$name] = $object;
+            return true;
+        }
+        return false;
     }
     
 }

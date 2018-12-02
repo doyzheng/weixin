@@ -2,14 +2,12 @@
 
 namespace doyzheng\weixin\base;
 
-use doyzheng\weixin\core\Helper;
-
 /**
  * 微信异步通知复用类
  * Trait BaseNotify
  * @package doyzheng\weixin\base
  */
-trait TraitNotify
+trait NotifyTrait
 {
     
     /**
@@ -40,6 +38,7 @@ trait TraitNotify
     }
     
     /**
+     * 回复微信数据
      * @param array $data
      * @return bool
      */
@@ -48,4 +47,38 @@ trait TraitNotify
         return Helper::array2xml($data);
     }
     
+    /**
+     * 获取请求原数据
+     * @return mixed
+     */
+    public static function getRawData()
+    {
+        $data = file_get_contents('php://input');
+        return $data;
+    }
+    
+    /**
+     *  获取请求原数据xml
+     * @return array
+     */
+    public static function getRawDataXml()
+    {
+        if ($data = static::getRawData()) {
+            return Helper::xml2array($data);
+        }
+        return [];
+    }
+    
+    /**
+     * 获取请求原数据json
+     * @return array
+     */
+    public static function getRawDataJson()
+    {
+        if ($data = static::getRawData()) {
+            return Helper::jsonDecode($data);
+        }
+        return [];
+    }
 }
+

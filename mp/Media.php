@@ -2,7 +2,7 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
+use doyzheng\weixin\base\Helper;
 
 /**
  * 临时素材
@@ -10,7 +10,7 @@ use doyzheng\weixin\base\BaseWeixin;
  * @package doyzheng\weixin\mp
  * @link    https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738726
  */
-class Media extends BaseWeixin
+class Media extends Module
 {
     
     /**
@@ -42,42 +42,45 @@ class Media extends BaseWeixin
      */
     public function get($mediaId)
     {
-        $url = self::API_GET . $this->accessToken;
-        $result = $this->request->get($url, ['media_id' => $mediaId]);
-        if ($data = $result->parseJson()) {
-            if (isset($data['errcode']) && $data['errcode'] != '0') {
-                return $this->exception->error($data['errmsg'], $data['errcode']);
-            }
+        $url    = self::API_GET . $this->app->accessToken;
+        $result = $this->app->request->get($url, ['media_id' => $mediaId]);
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result->content;
+        return $result->data();
     }
     
     /**
      * 上传临时素材
      * @param string $filename 文件名
      * @param string $type     素材类型
-     * @return array|string
+     * @return array
      */
     private function upload($filename, $type)
     {
+        // 支持远程图片上传
+        if (preg_match("/^http(.*)/", $filename)) {
+            $tmpFile = $filename = $this->downloadRemoteFile($filename);
+        }
         if (!is_file($filename)) {
-            return $this->exception->logic('文件不存在: ' . $filename);
+            return $this->app->exception->error('文件不存在: ' . $filename);
         }
         $query  = http_build_query([
-            'access_token' => $this->accessToken->getToken(),
+            'access_token' => $this->app->accessToken->getToken(),
             'type'         => $type
         ]);
         $data   = [
             'media' => new \CURLFile($filename)
         ];
-        $result = $this->request->post(self::API_UPLOAD . $query, $data);
-        if ($data = $result->parseJson()) {
-            if (isset($data['errcode']) && $data['errcode'] != '0') {
-                return $this->exception->error($data['errmsg'], $data['errcode']);
-            }
-            return $data;
+        $result = $this->app->request->post(self::API_UPLOAD . $query, $data);
+        // 如果是远程图片上传后直接删除
+        if (isset($tmpFile) && is_file($tmpFile)) {
+            @unlink($tmpFile);
         }
-        return $result->content;
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
+        }
+        return $result->data();
     }
     
     /**
@@ -118,6 +121,48 @@ class Media extends BaseWeixin
     public function uploadThumb($filename)
     {
         return $this->upload($filename, self::FILE_TYPE_THUMB);
+    }
+    
+    /**
+     * 返回临时文件Url
+     * @param string $mediaId
+     * @return string
+     */
+    public function mediaId2Url($mediaId)
+    {
+        if (!$mediaId) {
+            return '';
+        }
+        if (is_array($mediaId) && isset($mediaId['media_id'])) {
+            $mediaId = $mediaId['media_id'];
+        }
+        return "http://file.api.weixin.qq.com/cgi-bin/media/get?access_token={$this->app->accessToken}&media_id=" . $mediaId;
+    }
+    
+    /**
+     * 下载远程文件
+     * @param string $url
+     * @param string $filename
+     * @return string
+     */
+    public function downloadRemoteFile($url, $filename = '')
+    {
+        $extList     = [
+            'image/jpeg' => 'jpg',
+            'image/png'  => 'png'
+        ];
+        $result      = $this->app->request->get($url);
+        $contentType = $result->info->contentType;
+        if (empty($extList[$contentType])) {
+            $this->app->exception->error("Unsupported download file type $contentType");
+        }
+        if (!$filename) {
+            $filename = Helper::mkdir($this->app->runtimePath . '/temp/') . md5($filename . rand()) . '.' . $extList[$contentType];
+        }
+        if (@file_put_contents($filename, $result->content)) {
+            return $filename;
+        }
+        return '';
     }
     
 }

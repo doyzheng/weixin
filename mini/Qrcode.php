@@ -2,24 +2,17 @@
 
 namespace doyzheng\weixin\mini;
 
-use doyzheng\weixin\base\BaseWeixin;
-
 /**
  * Class Qrcode
  * 二维码/小程序码
  * @package doyzheng\weixin\mini
  */
-class Qrcode extends BaseWeixin
+class Qrcode extends Module
 {
     
-    /**
-     * @var array 获取小程序码，适用于需要的码数量极多的业务场景。通过该接口生成的小程序码，永久有效，数量暂无限制。 更多用法详见 获取二维码。
-     */
-    private $apiUrls = [
-        'getwxacodeunlimit' => 'https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=',
-        'getwxacode'        => 'https://api.weixin.qq.com/wxa/getwxacode?access_token=',
-        'createwxaqrcode'   => 'https://api.weixin.qq.com/cgi-bin/wxaapp/createwxaqrcode?access_token='
-    ];
+    const API_URL_GET = 'https://api.weixin.qq.com/wxa/getwxacode?access_token=';
+    const API_URL_GET_LIMIT = 'https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=';
+    const API_URL_CREATE = 'https://api.weixin.qq.com/cgi-bin/wxaapp/createwxaqrcode?access_token=';
     
     /**
      * 生成一个不限制的小程序码
@@ -34,8 +27,8 @@ class Qrcode extends BaseWeixin
             'scene' => $scene,
             'page'  => $page
         ], $extra);
-        
-        return $this->api($this->apiUrls['getwxacodeunlimit'] . $this->accessToken, $params);
+        $url    = self::API_URL_GET_LIMIT . $this->getAccessToken();
+        return $this->api($url, $params);
     }
     
     /**
@@ -49,8 +42,8 @@ class Qrcode extends BaseWeixin
         $params = array_merge([
             'path' => $path
         ], $extra);
-        
-        return $this->api($this->apiUrls['getwxacode'] . $this->accessToken, $params);
+        $url    = self::API_URL_GET . $this->getAccessToken();
+        return $this->api($url, $params);
     }
     
     /**
@@ -65,7 +58,8 @@ class Qrcode extends BaseWeixin
             'path'   => $path,
             'number' => $number,
         ];
-        return $this->api($this->apiUrls['createwxaqrcode'] . $this->accessToken, $params);
+        $url    = self::API_URL_CREATE . $this->getAccessToken();
+        return $this->api($url, $params);
     }
     
     /**
@@ -75,14 +69,11 @@ class Qrcode extends BaseWeixin
      */
     private function api($url, $params)
     {
-        $result = $this->request->postJson($url, $params);
-        
-        $data = $result->parseJson();
-        if (isset($data['errcode']) && $data['errcode'] != '0') {
-            return $this->exception->error($result['errmsg'], $result['errcode']);
+        $result = $this->app->request->post($url, $params);
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        
-        return $data ? $data : $result->content;
+        return $result->content;
     }
     
 }

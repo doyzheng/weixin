@@ -2,15 +2,13 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
-
 /**
  * 用户管理
  * Class User
  * @package doyzheng\weixin\mp
  *
  */
-class User extends BaseWeixin
+class User extends Module
 {
     
     /**
@@ -32,14 +30,14 @@ class User extends BaseWeixin
      * @param $openid
      * @return array
      */
-    public function info($openid)
+    public function getInfo($openid)
     {
         $query = [
-            'access_token' => $this->accessToken->getToken(),
+            'access_token' => $this->getAccessToken(),
             'openid'       => $openid,
             'lang'         => 'zh_CN'
         ];
-        return $this->api($this->apiUrls['info'], $query, 'GET');
+        return $this->api($this->apiUrls['info'], $query);
     }
     
     /**
@@ -47,9 +45,9 @@ class User extends BaseWeixin
      * @param $openList
      * @return array|mixed
      */
-    public function batchget($openList)
+    public function batchGet($openList)
     {
-        $url    = $this->apiUrls['batchget'] . '?access_token=' . $this->accessToken;
+        $url    = $this->apiUrls['batchget'] . '?access_token=' . $this->getAccessToken();
         $params = [];
         foreach ($openList as $openid) {
             $params['user_list'][] = [
@@ -57,7 +55,7 @@ class User extends BaseWeixin
                 'lang'   => 'zh_CN',
             ];
         }
-        return $this->api($url, $params);
+        return $this->api($url, $params, 'POST');
     }
     
     /**
@@ -68,12 +66,12 @@ class User extends BaseWeixin
      */
     public function updateRemark($openid, $remark)
     {
-        $url    = $this->apiUrls['updateremark'] . '?access_token=' . $this->accessToken;
+        $url    = $this->apiUrls['updateremark'] . '?access_token=' . $this->getAccessToken();
         $params = [
             'openid' => $openid,
             'remark' => $remark
         ];
-        return $this->api($url, $params);
+        return $this->api($url, $params, 'POST');
     }
     
     /**
@@ -84,10 +82,10 @@ class User extends BaseWeixin
     public function getList($nextOpenid = '')
     {
         $query = [
-            'access_token' => $this->accessToken->getToken(),
+            'access_token' => $this->getAccessToken(),
             'next_openid'  => $nextOpenid,
         ];
-        return $this->api($this->apiUrls['get'], $query, 'GET');
+        return $this->api($this->apiUrls['get'], $query);
     }
     
     /**
@@ -96,17 +94,17 @@ class User extends BaseWeixin
      * @param string $method
      * @return array|mixed
      */
-    private function api($url, $params, $method = 'POST')
+    private function api($url, $params, $method = 'GET')
     {
         if ($method == 'GET') {
-            $result = $this->request->getJson($url, $params);
+            $result = $this->app->request->get($url, $params);
         } else {
-            $result = $this->request->postJson($url, $params)->parseJson();
+            $result = $this->app->request->postJson($url, $params);
         }
-        if (isset($result['errcode']) && $result['errcode'] != '0') {
-            return $this->exception->error($result['errmsg'], $result['errcode']);
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result;
+        return $result->data();
     }
     
 }

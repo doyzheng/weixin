@@ -2,41 +2,104 @@
 
 namespace doyzheng\weixin\base;
 
-use doyzheng\weixin\core\Container;
 use doyzheng\weixin\Weixin;
 
 /**
- * 对象基础类
  * Class BaseObject
- * @package doyzheng\weixin\core
+ * @package doyzheng\weixin\base
  */
 abstract class BaseObject
 {
     
     /**
-     * @var Container 容器
+     * @var Weixin
      */
-    public $container;
+    public $app;
     
     /**
      * BaseObject constructor.
-     * @param array $config
      */
     public function __construct($config = [])
     {
-        $this->configure($config);
+        Weixin::configure($this, $config);
         $this->init();
     }
     
     /**
-     * 初始化方法
+     * 初始化
      */
-    protected function init()
+    public function init()
     {
     }
     
     /**
-     * 获取类名
+     * 获取对象的属性值
+     * @param string $name
+     * @return mixed
+     */
+    public function __get($name)
+    {
+        $getter = 'get' . ucwords($name);
+        if (method_exists($this, $getter)) {
+            return $this->$getter($name);
+        }
+        return $this->app->exception->unknownProperty('Getting unknown property:' . get_class($this) . '::' . $name);
+    }
+    
+    /**
+     * 设置对象的属性值
+     * @param string $name
+     * @param mixed  $value
+     * @return mixed
+     */
+    public function __set($name, $value)
+    {
+        $setter = 'set' . ucwords($name);
+        if (method_exists($this, $setter)) {
+            return $this->$setter($name, $value);
+        }
+        return $this->app->exception->unknownProperty('Setting unknown property:' . get_class($this) . '::' . $name);
+    }
+    
+    /**
+     * 判断对象属性是否存在
+     * @param string $name
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        $getter = 'get' . $name;
+        if (method_exists($this, $getter)) {
+            return $this->$getter($name) !== null;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * @param string $name
+     */
+    public function __unset($name)
+    {
+        $setter = 'set' . $name;
+        if (method_exists($this, $setter)) {
+            $this->$setter($name, null);
+        }
+        return $this->app->exception->unknownProperty('UnSetting unknown property:' . get_class($this) . '::' . $name);
+    }
+    
+    /**
+     * 调用类方法
+     * @param string $name
+     * @param        $params
+     */
+    public function __call($name, $params)
+    {
+        return $this->app->exception->unknownMethod('Calling unknown method: ' . get_class($this) . "::$name()");
+    }
+    
+    /**
+     * 获取对象名
      * @return string
      */
     public static function getClassName()
@@ -54,57 +117,6 @@ abstract class BaseObject
         $arr       = explode('\\', $className);
         array_pop($arr);
         return join('\\', $arr);
-    }
-    
-    /**
-     * 配置对象
-     * @param $config
-     */
-    public function configure($config)
-    {
-        if (is_array($config)) {
-            foreach ($config as $name => $value) {
-                if (property_exists($this, $name)) {
-                    $this->{$name} = $value;
-                }
-            }
-        }
-    }
-    
-    /**
-     * 获取属性
-     * @param $name
-     * @return mixed
-     */
-    public function __get($name)
-    {
-        $method = 'get' . $name;
-        if (method_exists($this, $method)) {
-            return call_user_func_array([$this, $method], []);
-        }
-        if ($value = $this->container->get($name)) {
-            return $value;
-        }
-        return null;
-    }
-    
-    /**
-     * 设置属性
-     * @param string $name
-     * @param mixed  $value
-     * @return bool|mixed
-     */
-    public function __set($name, $value)
-    {
-        $method = 'set' . $name;
-        if (method_exists($this, $method)) {
-            call_user_func_array([$this, $method], [$value]);
-            return true;
-        }
-        if ($value = $this->container->set($name, $value)) {
-            return $value;
-        }
-        return false;
     }
     
 }

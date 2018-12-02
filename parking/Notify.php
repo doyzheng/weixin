@@ -2,19 +2,19 @@
 
 namespace doyzheng\weixin\parking;
 
-use doyzheng\weixin\base\BaseWeixin;
-use doyzheng\weixin\base\TraitNotify;
-use doyzheng\weixin\core\Helper;
+use doyzheng\weixin\base\BaseModule;
+use doyzheng\weixin\base\NotifyTrait;
+use doyzheng\weixin\base\Helper;
 
 /**
  * 微信车主平台异步通知处理类
  * Class Notify
  * @package doyzheng\weixin\parking
  */
-class Notify extends BaseWeixin
+class Notify extends BaseModule
 {
     
-    use TraitNotify;
+    use NotifyTrait;
     
     /**
      * @var string
@@ -23,37 +23,37 @@ class Notify extends BaseWeixin
     
     /**
      * 用户无感支付状态变更通知
-     * @param $callback
+     * @param callable $callback
      * @return bool
      */
     public function userStartChange($callback)
     {
-        return $this->common($callback);
+        return $this->parse($callback);
     }
     
     /**
-     * @param $callback
+     * 支付结果通知
+     * @param callable $callback
      * @return bool
      */
     public function payResult($callback)
     {
-        return $this->common($callback);
+        return $this->parse($callback);
     }
     
     /**
-     * @param $callback
+     * @param callable $callback
      * @return bool
      */
-    private function common($callback)
+    private function parse($callback)
     {
-        $notifyData = $this->request->getRawDataXml();
+        $notifyData = self::getRawDataXml();
         
         if (empty($notifyData)) {
-            return $this->exceptionLogic('通知数据为空或格式错误');
+            return $this->app->exception->notify('通知数据为空或格式错误');
         }
-        
         if (empty($notifyData['sign'])) {
-            return $this->exceptionLogic('签名参数不能为空: sign');
+            return $this->app->exception->notify('签名参数不能为空: sign');
         }
         
         // 验证签名
@@ -62,7 +62,7 @@ class Notify extends BaseWeixin
         unset($signData['sign']);
         
         if (Helper::makeSignSha256($signData, $this->key) != $sign) {
-            return $this->exceptionLogic('签名验证失败');
+            return $this->app->exception->notify('签名验证失败');
         }
         
         // 回调

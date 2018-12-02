@@ -1,13 +1,13 @@
 <?php
 
-namespace doyzheng\weixin\core\exception;
+namespace doyzheng\weixin\base\exception;
 
 /**
- * 微信全局返回码说明
- * Class WxErrorException
- * @package doyzheng\weixin\core\exception
+ * 发送请求异常
+ * Class WxLogicException
+ * @package doyzheng\weixin\base\exception
  */
-class WxErrorException extends BaseException
+class WxRequestException extends BaseException
 {
     
     /**
@@ -188,14 +188,9 @@ class WxErrorException extends BaseException
      */
     public function __construct($message = '', $code = 0, \Throwable $previous = null)
     {
-        if (is_numeric($message)) {
-            $code    = (int)$message;
-            $message = static::code2Message($message);
-        } elseif (is_array($message) && isset($message['errcode']) && isset($message['errmsg'])) {
-            $code    = $message['errcode'];
-            $message = static::code2Message($message['errcode']) ? static::code2Message($message['errcode']) : $message['errmsg'];
+        if (is_numeric($code)) {
+            $message = static::code2Message($code);
         }
-        
-        parent::__construct($message, (int)$code, $previous);
+        parent::__construct($message, $code, $previous);
     }
 }

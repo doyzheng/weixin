@@ -3,41 +3,46 @@
 namespace doyzheng\weixin\base;
 
 /**
+ * 模块基类
  * Class BaseModule
  * @package doyzheng\weixin\base
  */
-abstract class BaseModule extends BaseWeixin
+abstract class BaseModule extends BaseObject
 {
     
     /**
-     * 获取子类实例
+     * 工厂方法（创建当前模块下实例）
      * @param $name
-     * @return mixed
+     * @return mixed|null
      */
     public function __get($name)
     {
-        if ($value = parent::__get($name)) {
-            return $value;
-        }
-        
         // 当前命令空间下查找
         $className = static::getNamespace() . '\\' . ucwords($name);
-        
-        if ($class = $this->container->get($className)) {
+        if ($class = $this->app->get($className)) {
             return $class;
         }
         
         $className = static::getNamespace() . '\\' . $name . '\\' . 'Module';
-        if ($class = $this->container->get($className)) {
+        if ($class = $this->app->get($className)) {
             return $class;
         }
         
         $className = static::getNamespace() . '\\' . $name . '\\' . ucwords($name);
-        if ($class = $this->container->get($className)) {
+        if ($class = $this->app->get($className)) {
             return $class;
         }
         
-        return $this->exception->unknownClass($className);
+        return parent::__get($name);
+    }
+    
+    /**
+     * 获取接口访问token
+     * @return string
+     */
+    public function getAccessToken($isRefresh = false)
+    {
+        return $this->app->accessToken->getToken($isRefresh);
     }
     
 }

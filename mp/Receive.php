@@ -2,15 +2,14 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\core\Helper;
-use doyzheng\weixin\base\BaseWeixin;
+use doyzheng\weixin\base\Helper;
 
 /**
  * 被动回复用户消息
  * Class Receive
  * @package doyzheng\weixin\mp
  */
-class Receive extends BaseWeixin
+class Receive extends Module
 {
     
     /**
@@ -178,11 +177,11 @@ class Receive extends BaseWeixin
         ], $params);
         
         if (empty($data['ToUserName'])) {
-            return $this->exception->invalidArgument('接收方帐号（收到的OpenID）不能为空: ToUserName');
+            return $this->app->exception->invalidArgument('接收方帐号（收到的OpenID）不能为空: ToUserName');
         }
         
         if (empty($data['FromUserName'])) {
-            return $this->exception->invalidArgument('开发者微信号不能为空: FromUserName');
+            return $this->app->exception->invalidArgument('开发者微信号不能为空: FromUserName');
         }
         
         return Helper::array2xml($data);

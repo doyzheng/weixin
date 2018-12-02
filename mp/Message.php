@@ -2,14 +2,13 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
-use doyzheng\weixin\core\Helper;
+use doyzheng\weixin\base\Helper;
 
 /**
  * Class Message
  * @package doyzheng\weixin\mp
  */
-class Message extends BaseWeixin
+class Message extends Module
 {
     
     // 文本消息
@@ -32,9 +31,9 @@ class Message extends BaseWeixin
     /**
      * 记录微信通知数据
      */
-    protected function init()
+    public function init()
     {
-        $this->log->access('weixin_message');
+        $this->app->log->access('weixin_message');
     }
     
     /**

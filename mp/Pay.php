@@ -2,8 +2,7 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
-use doyzheng\weixin\core\Helper;
+use doyzheng\weixin\base\Helper;
 
 /**
  * 公众号支付
@@ -11,7 +10,7 @@ use doyzheng\weixin\core\Helper;
  * @package doyzheng\weixin\mini\payment
  * @link    https://pay.weixin.qq.com/wiki/doc/api/wxa/wxa_api.php?chapter=9_1
  */
-class Pay extends BaseWeixin
+class Pay extends Module
 {
     
     /**
@@ -36,15 +35,15 @@ class Pay extends BaseWeixin
     public function __construct($config = [])
     {
         if (empty($config['appid'])) {
-            $this->exception->invalidArgument('公众账号ID不能为空: appid');
+            $this->app->exception->invalidArgument('公众账号ID不能为空: appid');
         }
         
         if (empty($config['mch_id'])) {
-            $this->exception->invalidArgument('商户号不能为空: mch_id');
+            $this->app->exception->invalidArgument('商户号不能为空: mch_id');
         }
         
         if (empty($config['key'])) {
-            $this->exception->invalidArgument('商户Api秘钥为空: key');
+            $this->app->exception->invalidArgument('商户Api秘钥为空: key');
         }
         parent::__construct($config);
     }
@@ -79,19 +78,19 @@ class Pay extends BaseWeixin
     public function unifiedOrder(array $params)
     {
         if (empty($params['body'])) {
-            return $this->exception->invalidArgument('商品描述不能为空: body');
+            return $this->app->exception->invalidArgument('商品描述不能为空: body');
         }
         if (empty($params['out_trade_no'])) {
-            return $this->exception->invalidArgument('商户订单号不能为空: out_trade_no');
+            return $this->app->exception->invalidArgument('商户订单号不能为空: out_trade_no');
         }
         if (empty($params['total_fee'])) {
-            return $this->exception->invalidArgument('标价金额不能为空: total_fee');
+            return $this->app->exception->invalidArgument('标价金额不能为空: total_fee');
         }
         if (empty($params['notify_url'])) {
-            return $this->exception->invalidArgument('通知地址不能为空: notify_url');
+            return $this->app->exception->invalidArgument('通知地址不能为空: notify_url');
         }
         if (empty($params['openid'])) {
-            return $this->exception->invalidArgument('用户标识不能为空: openid');
+            return $this->app->exception->invalidArgument('用户标识不能为空: openid');
         }
         
         // 请求参数
@@ -159,25 +158,25 @@ class Pay extends BaseWeixin
     public function refund(array $params, $options = [])
     {
         if (empty($params['transaction_id']) && empty($params['out_trade_no'])) {
-            return $this->exception->invalidArgument('微信订单号,商户订单号必须二选一: transaction_id,out_trade_no');
+            return $this->app->exception->invalidArgument('微信订单号,商户订单号必须二选一: transaction_id,out_trade_no');
         }
         if (empty($params['out_refund_no'])) {
-            return $this->exception->invalidArgument('商户退款单号不能为空: out_refund_no');
+            return $this->app->exception->invalidArgument('商户退款单号不能为空: out_refund_no');
         }
         if (empty($params['total_fee'])) {
-            return $this->exception->invalidArgument('订单金额不能为空: total_fee');
+            return $this->app->exception->invalidArgument('订单金额不能为空: total_fee');
         }
         if (empty($params['refund_fee'])) {
-            return $this->exception->invalidArgument('退款金额不能为空: refund_fee');
+            return $this->app->exception->invalidArgument('退款金额不能为空: refund_fee');
         }
         if (empty($params['notify_url'])) {
-            return $this->exception->invalidArgument('退款结果通知地址不能为空: notify_url');
+            return $this->app->exception->invalidArgument('退款结果通知地址不能为空: notify_url');
         }
         if (empty($options['cert.pem'])) {
-            return $this->exception->invalidArgument('证书文件名不能为空: cert.pem');
+            return $this->app->exception->invalidArgument('证书文件名不能为空: cert.pem');
         }
         if (empty($options['key.pem'])) {
-            return $this->exception->invalidArgument('证书文件名不能为空: key.pem');
+            return $this->app->exception->invalidArgument('证书文件名不能为空: key.pem');
         }
         // 请求参数
         $requestParams = [
@@ -208,7 +207,7 @@ class Pay extends BaseWeixin
     public function refundQuery(array $params)
     {
         if (empty($params['transaction_id']) && empty($params['out_trade_no']) && empty($params['out_refund_no']) && empty($params['refund_id'])) {
-            return $this->exception->invalidArgument('微信订单号,商户订单号,商户退款单号,微信退款单号必须四选一: transaction_id, out_trade_no, out_refund_no, refund_id');
+            return $this->app->exception->invalidArgument('微信订单号,商户订单号,商户退款单号,微信退款单号必须四选一: transaction_id, out_trade_no, out_refund_no, refund_id');
         }
         // 请求参数
         $requestParams = [
@@ -296,15 +295,12 @@ class Pay extends BaseWeixin
         ];
         $params         = Helper::arrayMerge(array_filter($commonParams), $params);
         $params['sign'] = Helper::makeSignMd5($params, $this->key);
+        $result         = $this->app->request->postXml($url, $params, $options);
         
-        $result = $this->request->postXml($url, $params, $options);
-        $data   = $result->parseXml();
-        
-        if (isset($data['return_msg']) && $data['return_code'] != 'SUCCESS') {
-            return $this->exception->error($data['return_msg']);
+        if ($result->returnCode != 'SUCCESS') {
+            $this->app->exception->request($result->returnCode, 0);
         }
-        
-        return $data ? $data : $result->content;
+        return $result->data() ? $result->data() : $result->content;
     }
     
 }

@@ -2,8 +2,7 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
-use doyzheng\weixin\core\Helper;
+use doyzheng\weixin\base\Helper;
 
 /**
  * 永久素材
@@ -11,7 +10,7 @@ use doyzheng\weixin\core\Helper;
  * @package doyzheng\weixin\mp
  * @link    https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738729
  */
-class Material extends BaseWeixin
+class Material extends Module
 {
     
     // 获取永久素材 GET
@@ -146,17 +145,14 @@ class Material extends BaseWeixin
     private function api($url, $data, $method = 'POST')
     {
         if ($method == "POST") {
-            $result = $this->request->postJson($url, $data);
+            $result = $this->app->request->post($url, $data);
         } else {
-            $result = $this->request->get($url, $data);
+            $result = $this->app->request->get($url, $data);
         }
-        if ($data = $result->parseJson()) {
-            if (isset($data['errcode']) && $data['errcode'] != '0') {
-                return $this->exception->error($data['errmsg'], $data['errcode']);
-            }
-            return $data;
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result->content;
+        return $result->data();
     }
     
     /**
@@ -169,7 +165,7 @@ class Material extends BaseWeixin
     private function upload($filename, $type, $params = [])
     {
         if (!is_file($filename)) {
-            return $this->exception->logic('文件不存在: ' . $filename);
+            return $this->app->exception->error('文件不存在: ' . $filename);
         }
         $query  = [
             'access_token' => $this->getAccessToken(),
@@ -179,15 +175,11 @@ class Material extends BaseWeixin
         $params = Helper::arrayMerge([
             'media' => new \CURLFile($filename),
         ], $params);
-        
-        $result = $this->request->post($url, $params);
-        if ($data = $result->parseJson()) {
-            if (isset($data['errcode']) && $data['errcode'] != '0') {
-                return $this->exception->error($data['errmsg'], $data['errcode']);
-            }
-            return $data;
+        $result = $this->app->request->post($url, $params);
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result->content;
+        return $result->data();
     }
     
     /**
@@ -245,20 +237,16 @@ class Material extends BaseWeixin
     public function uploadImg($filename)
     {
         if (!is_file($filename)) {
-            return $this->exception->logic('文件不存在: ' . $filename);
+            return $this->app->exception->error('文件不存在: ' . $filename);
         }
         $data   = [
             'media' => new \CURLFile($filename)
         ];
-        $result = $this->request->post(self::API_UPLOAD_IMG . $this->getAccessToken(), $data);
-        if ($data = $result->parseJson()) {
-            if (isset($data['errcode']) && $data['errcode'] != '0') {
-                return $this->exception->error($data['errmsg'], $data['errcode']);
-            }
-            return $data;
+        $result = $this->app->request->post(self::API_UPLOAD_IMG . $this->getAccessToken(), $data);
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result->content;
+        return $result->data();
     }
-    
     
 }

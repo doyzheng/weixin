@@ -2,15 +2,14 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
-use doyzheng\weixin\core\Helper;
+use doyzheng\weixin\base\Helper;
 
 /**
  * Class Template
  * @package doyzheng\weixin\mp
  * @link    https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1433751277
  */
-class Template extends BaseWeixin
+class Template extends Module
 {
     
     // 设置所属行业
@@ -34,7 +33,7 @@ class Template extends BaseWeixin
      */
     public function setIndustry($industryId1, $industryId2)
     {
-        $url    = self::API_URL_SET_INDUSTRY . $this->accessToken;
+        $url    = self::API_URL_SET_INDUSTRY . $this->getAccessToken();
         $params = [
             'industry_id1' => $industryId1,
             'industry_id2' => $industryId2,
@@ -48,7 +47,7 @@ class Template extends BaseWeixin
      */
     public function getIndustry()
     {
-        $url = self::API_URL_GET_INDUSTRY . $this->accessToken;
+        $url = self::API_URL_GET_INDUSTRY . $this->getAccessToken();
         return $this->api($url, [], 'GET');
     }
     
@@ -59,7 +58,7 @@ class Template extends BaseWeixin
      */
     public function addTemplate($templateIdShort)
     {
-        $url    = self::API_URL_ADD_TEMPLATE . $this->accessToken;
+        $url    = self::API_URL_ADD_TEMPLATE . $this->getAccessToken();
         $params = [
             'template_id_short' => $templateIdShort,
         ];
@@ -72,7 +71,7 @@ class Template extends BaseWeixin
      */
     public function getAllPrivateTemplate()
     {
-        $url = self::API_URL_GET_ALL_PRIVATE_TEMPLATE . $this->accessToken;
+        $url = self::API_URL_GET_ALL_PRIVATE_TEMPLATE . $this->getAccessToken();
         return $this->api($url, [], 'GET');
     }
     
@@ -83,7 +82,7 @@ class Template extends BaseWeixin
      */
     public function delPrivateTemplate($templateId)
     {
-        $url    = self::API_URL_DEL_PRIVATE_TEMPLATE . $this->accessToken;
+        $url    = self::API_URL_DEL_PRIVATE_TEMPLATE . $this->getAccessToken();
         $params = [
             'template_id' => $templateId,
         ];
@@ -108,7 +107,7 @@ class Template extends BaseWeixin
             'miniprogram' => [],
             'data'        => $data,
         ], $extra);
-        return $this->api(self::API_URL_SEND . $this->accessToken, $params);
+        return $this->api(self::API_URL_SEND . $this->getAccessToken(), $params);
     }
     
     /**
@@ -120,15 +119,14 @@ class Template extends BaseWeixin
     private function api($url, $params, $method = 'POST')
     {
         if ($method == 'POST') {
-            $result = $this->request->postJson($url, $params)->parseJson();
+            $result = $this->app->request->post($url, $params)->parseJson();
         } else {
-            $result = $this->request->getJson($url, $params);
+            $result = $this->app->request->get($url, $params);
         }
-        
-        if (isset($result['errcode']) && $result['errcode'] != '0') {
-            return $this->exception->error($result['errmsg'], $result['errcode']);
+        if ($result->errMsg && $result->errCode) {
+            $this->app->exception->request($result->errMsg, $result->errCode);
         }
-       
-        return $result;
+        return $result->data();
     }
+    
 }

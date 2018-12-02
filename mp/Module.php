@@ -22,6 +22,6 @@ use doyzheng\weixin\base\BaseModule;
  */
 class Module extends BaseModule
 {
-    
+
 }
 

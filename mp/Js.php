@@ -2,15 +2,13 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
-use doyzheng\weixin\core\Helper;
-use doyzheng\weixin\core\Request;
+use doyzheng\weixin\base\Helper;
 
 /**
  * 微信JsApi
  * @package doyzheng\weixin\mp
  */
-class Js extends BaseWeixin
+class Js extends Module
 {
     
     /**
@@ -40,13 +38,11 @@ class Js extends BaseWeixin
     public function config(array $APIs, $debug = false, $beta = false, $json = true)
     {
         $signPackage = $this->signature();
-        
-        $base   = [
+        $base        = [
             'debug' => $debug,
             'beta'  => $beta,
         ];
-        $config = array_merge($base, $signPackage, ['jsApiList' => $APIs]);
-        
+        $config      = array_merge($base, $signPackage, ['jsApiList' => $APIs]);
         return $json ? json_encode($config) : $config;
     }
     
@@ -69,24 +65,19 @@ class Js extends BaseWeixin
      */
     public function ticket($forceRefresh = false)
     {
-        $key = $this->cachePrefix . $this->accessToken->appid;
-        
-        $ticket = $this->cache->get($key);
-        
+        $key    = $this->cachePrefix . $this->app->accessToken->appid;
+        $ticket = $this->app->cache->get($key);
         if (!$forceRefresh && !empty($ticket)) {
             return $ticket;
         }
-        
-        $result = $this->request->getJson(self::API_TICKET . $this->accessToken, [
+        $result = $this->app->request->get(self::API_TICKET . $this->app->accessToken, [
             'type' => 'jsapi'
         ]);
-        
-        if (isset($result['errcode']) && $result['errcode'] != '0' && isset($result['errmsg'])) {
-            $this->exception->error($result['errmsg'], $result['errcode']);
+        if ($result->errMsg && $result->errCode) {
+            $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        
-        $this->cache->set($key, $result['ticket'], $result['expires_in'] - 500);
-        return $result['ticket'];
+        $this->app->cache->set($key, $result->data('ticket'), $result->data('expires_in') - 500);
+        return $result->data('ticket');
     }
     
     /**
@@ -103,7 +94,7 @@ class Js extends BaseWeixin
         $timestamp = $timestamp ? $timestamp : time();
         $ticket    = $this->ticket();
         $sign      = [
-            'appId'     => $this->accessToken->appid,
+            'appId'     => $this->app->accessToken->appid,
             'nonceStr'  => $nonce,
             'timestamp' => $timestamp,
             'url'       => $url,
@@ -133,7 +124,6 @@ class Js extends BaseWeixin
     public function setUrl($url)
     {
         $this->url = $url;
-        
         return $this;
     }
     
@@ -146,7 +136,7 @@ class Js extends BaseWeixin
         if ($this->url) {
             return $this->url;
         }
-        return Request::getSelfUrl();
+        return Helper::getSelfUrl();
     }
     
 }

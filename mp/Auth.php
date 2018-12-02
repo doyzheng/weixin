@@ -2,15 +2,15 @@
 
 namespace doyzheng\weixin\mp;
 
-use doyzheng\weixin\base\BaseWeixin;
-use doyzheng\weixin\core\Request;
+use doyzheng\weixin\base\Helper;
+use doyzheng\weixin\base\Result;
 
 /**
  * 网页应用用户授权
  * Class Auth
  * @package doyzheng\weixin\mp
  */
-class Auth extends BaseWeixin
+class Auth extends Module
 {
     
     /**
@@ -35,10 +35,12 @@ class Auth extends BaseWeixin
      */
     public function getCode($isUserInfo = false, $state = '')
     {
-        if (empty($_GET['code']) && empty($_GET['state'])) {
+        if (isset($_GET['code']) && isset($_GET['state']) && $_GET['code'] && $_GET['state'] == $state) {
+            return $_GET['code'];
+        } else {
             $query = [
-                'appid'         => $this->accessToken->appid,
-                'redirect_uri'  => Request::getSelfUrl(),
+                'appid'         => $this->app->accessToken->appid,
+                'redirect_uri'  => Helper::getSelfUrl(),
                 'response_type' => 'code',
                 'scope'         => $isUserInfo ? 'snsapi_userinfo' : 'snsapi_base',
                 'state'         => $state,
@@ -46,10 +48,6 @@ class Auth extends BaseWeixin
             $url   = self::API_AUTHORIZE . '?' . http_build_query($query) . '#wechat_redirect';
             exit(header('location: ' . $url));
         }
-        if ($_GET['state'] == $state) {
-            return $_GET['code'];
-        }
-        return '';
     }
     
     /**
@@ -61,7 +59,7 @@ class Auth extends BaseWeixin
     {
         $code = $this->getCode($isUserInfo, $this->state);
         if (empty($code)) {
-            return $this->exception->logic('获取code失败');
+            return $this->app->exception->error('获取code失败');
         }
         return $this->getTokenByCode($code);
     }
@@ -98,27 +96,12 @@ class Auth extends BaseWeixin
     }
     
     /**
-     * 重定向
+     * 重定向到来源页
      */
-    public function redirect($url = '')
+    public function redirect()
     {
-        if (!$url) {
-            $protocol = 'http://';
-            if ((!empty($_SERVER['HTTPS']) && 'off' !== $_SERVER['HTTPS'])
-                || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && 'https' === $_SERVER['HTTP_X_FORWARDED_PROTO'])) {
-                $protocol = 'https://';
-            }
-            $url = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-            
-            if (isset($_GET['code']) && isset($_GET['state'])) {
-                $query = [
-                    'code'  => $_GET['code'],
-                    'state' => $_GET['state']
-                ];
-                $url = str_replace(http_build_query($query), '', $url);
-            }
-        }
-        exit(header('location: ' . $url));
+        $arr = explode('?', Helper::getSelfUrl());
+        exit(header('location: ' . array_shift($arr)));
     }
     
     /**
@@ -129,8 +112,8 @@ class Auth extends BaseWeixin
     public function getTokenByCode($code)
     {
         $query = [
-            'appid'      => $this->accessToken->appid,
-            'secret'     => $this->accessToken->secret,
+            'appid'      => $this->app->accessToken->appid,
+            'secret'     => $this->app->accessToken->secret,
             'code'       => $code,
             'grant_type' => 'authorization_code',
         ];
@@ -138,17 +121,18 @@ class Auth extends BaseWeixin
     }
     
     /**
+     * 统一调用接口方法
      * @param $url
      * @param $query
-     * @return array|mixed
+     * @return array
      */
     private function api($url, $query)
     {
-        $result = $this->request->getJson($url, $query);
-        if (isset($result['errcode']) && $result['errcode'] != '0') {
-            return $this->exception->error($result['errmsg'], $result['errcode']);
+        $result = $this->app->request->get($url, $query);
+        if ($result->errCode && $result->errMsg) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result;
+        return $result->data();
     }
     
 }

@@ -1,37 +1,28 @@
 <?php
 
-namespace doyzheng\weixin\core;
+namespace doyzheng\weixin\base\cache;
 
 use doyzheng\weixin\base\BaseCache;
+use doyzheng\weixin\base\Helper;
 
 /**
- * 文件方式数据缓存类
- * Class Cache
- * @package doyzheng\weixin\core
+ * 文件缓存类
+ * Class File
+ * @package doyzheng\weixin\base\cache
  */
-class Cache extends BaseCache
+class File extends BaseCache
 {
     
     /**
-     * @var string 缓存目录
+     * @var string
      */
     public $savePath;
     
     /**
-     * 初始化
-     */
-    public function init()
-    {
-        // 默认缓存目录
-        if (!$this->savePath) {
-            $this->savePath = Helper::mkdir($this->container->weixin->runtimePath . '/cache');
-        }
-    }
-    
-    /**
-     * @param string $key
-     * @param string $value
-     * @param null   $duration
+     * 设置缓存
+     * @param string   $key
+     * @param mixed    $value
+     * @param null|int $duration
      * @return mixed
      */
     public function set($key, $value, $duration = null)
@@ -47,6 +38,7 @@ class Cache extends BaseCache
     }
     
     /**
+     * 获取缓存
      * @param string $key
      * @return mixed
      */
@@ -57,7 +49,7 @@ class Cache extends BaseCache
         }
         $filename = $this->getFilenameByKey($key);
         $content  = Helper::readFile($filename);
-        $data = json_decode($content, true);
+        $data     = json_decode($content, true);
         if (!$data) {
             $this->delete($key);
             return null;
@@ -74,7 +66,7 @@ class Cache extends BaseCache
     /**
      * 删除缓存
      * @param string $key
-     * @return bool
+     * @return mixed
      */
     public function delete($key)
     {
@@ -88,20 +80,11 @@ class Cache extends BaseCache
     /**
      * 缓存是否存在
      * @param string $key
-     * @return bool|mixed
+     * @return mixed
      */
     public function exists($key)
     {
         return is_file($this->getFilenameByKey($key));
-    }
-    
-    /**
-     * @param $key
-     * @return string
-     */
-    private function getKey($key)
-    {
-        return md5($key);
     }
     
     /**
@@ -111,7 +94,7 @@ class Cache extends BaseCache
      */
     private function getFilenameByKey($key)
     {
-        return $this->savePath . '/' . $this->getKey($key) . '.json';
+        return $this->savePath . '/' . $this->buildKey($key) . '.json';
     }
     
 }
