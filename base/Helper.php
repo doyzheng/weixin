@@ -317,36 +317,11 @@ class Helper
      */
     public static function mkdir($path)
     {
-        if (static::createDirectory($path)) {
-            return realpath($path);
+        if (!is_dir($path)) {
+            mkdir($path, 0777, true);
+            chmod($path, 0777);
         }
-        return '';
-    }
-    
-    /**
-     * @param      $path
-     * @param int  $mode
-     * @param bool $recursive
-     * @return bool
-     */
-    private static function createDirectory($path, $mode = 0777, $recursive = true)
-    {
-        if (is_dir($path)) {
-            return true;
-        }
-        $parentDir = dirname($path);
-        // recurse if parent dir does not exist and we are not at the root of the file system.
-        if ($recursive && !is_dir($parentDir) && $parentDir !== $path) {
-            static::createDirectory($parentDir, $mode, true);
-        }
-        try {
-            if (!mkdir($path, $mode)) {
-                return false;
-            }
-            return chmod($path, $mode);
-        } catch (\Exception $e) {
-            return false;
-        }
+        return realpath($path);
     }
     
     /**
