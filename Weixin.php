@@ -40,26 +40,36 @@ class Weixin
     public $appDebug = false;
     
     /**
+     * @var array 核心类
+     */
+    private $_coreClass = [
+        'cache'       => 'doyzheng\weixin\base\Cache',
+        'log'         => 'doyzheng\weixin\base\Log',
+        'request'     => 'doyzheng\weixin\base\Request',
+        'session'     => 'doyzheng\weixin\base\Session',
+        'accessToken' => 'doyzheng\weixin\base\AccessToken',
+        'exception'   => 'doyzheng\weixin\base\Exception',
+    ];
+    
+    /**
+     * @var array 模块类
+     */
+    private $_modules = [
+        'mp'      => 'doyzheng\weixin\mp\Module',
+        'mini'    => 'doyzheng\weixin\mini\Module',
+        'open'    => 'doyzheng\weixin\open\Module',
+        'parking' => 'doyzheng\weixin\parking\Module'
+    ];
+    
+    /**
+     * 构造方法
      * Weixin constructor.
      * @param $config
      */
     public function __construct($config = [])
     {
-        $mapClass        = [
-            // 核心类
-            'cache'       => 'doyzheng\weixin\base\Cache',
-            'log'         => 'doyzheng\weixin\base\Log',
-            'request'     => 'doyzheng\weixin\base\Request',
-            'session'     => 'doyzheng\weixin\base\Session',
-            'accessToken' => 'doyzheng\weixin\base\AccessToken',
-            'exception'   => 'doyzheng\weixin\base\Exception',
-            // 模块类
-            'mp'          => 'doyzheng\weixin\mp\Module',
-            'mini'        => 'doyzheng\weixin\mini\Module',
-            'open'        => 'doyzheng\weixin\open\Module',
-            'parking'     => 'doyzheng\weixin\parking\Module',
-        ];
-        $this->container = new Container($this, $mapClass, $config);
+        $classMap        = array_merge($this->_coreClass, $this->_modules);
+        $this->container = new Container($this, $classMap, $config);
         // 设置运行目录目录
         if (isset($config['runtimePath']) && is_dir($config['runtimePath'])) {
             $this->runtimePath = realpath($config['runtimePath']);
@@ -74,7 +84,7 @@ class Weixin
      */
     public static function getVersion()
     {
-        return '1.2';
+        return '1.2.1';
     }
     
     /**
@@ -138,6 +148,16 @@ class Weixin
             return true;
         }
         return false;
+    }
+    
+    /**
+     * 扩展新模块
+     * @param string $name
+     * @param string $class
+     */
+    public function extentModule($name, $class)
+    {
+        $this->container->extend($name, $class);
     }
     
 }

@@ -36,8 +36,9 @@ class Container
     
     /**
      * Container constructor.
-     * @param array $class
-     * @param array $config 全局配置
+     * @param Weixin $weixin
+     * @param array  $classMap
+     * @param array  $config 全局配置
      */
     public function __construct($weixin, $classMap = [], $config = [])
     {
@@ -49,7 +50,7 @@ class Container
     /**
      * 获取容器内的实例
      * @param $name
-     * @return mixed|null
+     * @return mixed
      */
     public function get($name)
     {
@@ -81,8 +82,8 @@ class Container
     
     /**
      * 设置容器中的对象
-     * @param $name
-     * @param $value
+     * @param string $name
+     * @param mixed  $object
      * @return bool
      */
     public function set($name, $object)
@@ -92,6 +93,31 @@ class Container
             return true;
         }
         return false;
+    }
+    
+    /**
+     * 扩展一个新实例
+     * @param string $class
+     * @param array $class
+     * @return bool
+     */
+    public function extend($name, $class)
+    {
+        $this->classMap[$name] = $class;
+        return true;
+    }
+    
+    /**
+     * 检查实例是否存在
+     * @param string $name
+     * @return bool
+     */
+    public function has($name)
+    {
+        if (isset($this->classMap[$name])) {
+            return true;
+        }
+        return isset($this->_instances[$name]);
     }
     
 }
