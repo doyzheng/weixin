@@ -84,7 +84,7 @@ class Weixin
      */
     public static function getVersion()
     {
-        return '1.2.1';
+        return '1.2.2';
     }
     
     /**
