@@ -11,6 +11,31 @@ class Helper
 {
     
     /**
+     * 友好输出
+     */
+    public static function dump()
+    {
+        static $_static = array();
+        foreach (func_get_args() as $var) {
+            if (empty($_static)) {
+                $_static = true;
+                header('content-type:text/html;charset=utf-8');
+            }
+            echo '<pre><hr>';
+            if (is_null($var) || is_bool($var)) {
+                var_dump($var);
+            } else if (is_array($var)) {
+                echo print_r($var, true);
+            } else {
+                print_r($var);
+            }
+            echo '</pre>';
+            flush();
+        }
+        die;
+    }
+    
+    /**
      * 数组转换XML
      * @param      $obj
      * @param bool $withRootNode
@@ -54,19 +79,6 @@ class Helper
             return $result;
         }
         return [];
-    }
-    
-    /**
-     * 获取当前的请求的url地址
-     * @return string
-     */
-    public static function getSelfUrl()
-    {
-        $sys_protocal = isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443' ? 'https://' : 'http://';
-        $php_self     = $_SERVER['PHP_SELF'] ? $_SERVER['PHP_SELF'] : $_SERVER['SCRIPT_NAME'];
-        $path_info    = isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : '';
-        $relate_url   = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : $php_self . (isset($_SERVER['QUERY_STRING']) ? '?' . $_SERVER['QUERY_STRING'] : $path_info);
-        return $sys_protocal . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '') . $relate_url;
     }
     
     /**
@@ -214,7 +226,6 @@ class Helper
             }, $name);
             return $ucfirst ? ucfirst($name) : lcfirst($name);
         }
-        
         return strtolower(trim(preg_replace("/[A-Z]/", "_\\0", $name), "_"));
     }
     
@@ -230,7 +241,6 @@ class Helper
         if ($key instanceof \Closure) {
             return $key($array, $default);
         }
-        
         if (is_array($key)) {
             $lastKey = array_pop($key);
             foreach ($key as $keyPart) {
@@ -238,16 +248,13 @@ class Helper
             }
             $key = $lastKey;
         }
-        
         if (is_array($array) && (isset($array[$key]) || array_key_exists($key, $array))) {
             return $array[$key];
         }
-        
         if (($pos = strrpos($key, '.')) !== false) {
             $array = static::getValue($array, substr($key, 0, $pos), $default);
             $key   = substr($key, $pos + 1);
         }
-        
         if (is_object($array)) {
             // this is expected to fail if the property does not exist, or __get() is not implemented
             // it is not reliably possible to check whether a property is accessible beforehand
@@ -255,7 +262,6 @@ class Helper
         } elseif (is_array($array)) {
             return (isset($array[$key]) || array_key_exists($key, $array)) ? $array[$key] : $default;
         }
-        
         return $default;
     }
     
@@ -282,32 +288,48 @@ class Helper
      */
     public static function getServiceIp()
     {
-    
+        if (isset($_SERVER)) {
+            if ($_SERVER['SERVER_ADDR']) {
+                $server_ip = $_SERVER['SERVER_ADDR'];
+            } else {
+                $server_ip = $_SERVER['LOCAL_ADDR'];
+            }
+        } else {
+            $server_ip = getenv('SERVER_ADDR');
+        }
+        return $server_ip;
     }
     
     /**
-     * 友好输出
+     * 获取当前的请求的url地址
+     * @return string
      */
-    public static function dump()
+    public static function getSelfUrl()
     {
-        static $_static = array();
-        foreach (func_get_args() as $var) {
-            if (empty($_static)) {
-                $_static = true;
-                header('content-type:text/html;charset=utf-8');
-            }
-            echo '<pre><hr>';
-            if (is_null($var) || is_bool($var)) {
-                var_dump($var);
-            } else if (is_array($var)) {
-                echo print_r($var, true);
-            } else {
-                print_r($var);
-            }
-            echo '</pre>';
-            flush();
+        $scheme = 'http';
+        if (isset($_SERVER['REQUEST_SCHEME'])) {
+            $scheme = $_SERVER['REQUEST_SCHEME'];
+        } elseif (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') {
+            $scheme = 'https';
+        } elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+            $scheme = 'https';
+        } elseif (!empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) !== 'off') {
+            $scheme = 'https:';
         }
-        die;
+        $requestUri = '';
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $requestUri = $_SERVER['REQUEST_URI'];
+            if ($requestUri !== '' && $requestUri[0] !== '/') {
+                $requestUri = preg_replace('/^(http|https):\/\/[^\/]+/i', '', $requestUri);
+            }
+        } elseif (isset($_SERVER['ORIG_PATH_INFO'])) { // IIS 5.0 CGI
+            $requestUri = $_SERVER['ORIG_PATH_INFO'];
+            if (!empty($_SERVER['QUERY_STRING'])) {
+                $requestUri .= '?' . $_SERVER['QUERY_STRING'];
+            }
+        }
+        $host = isset($_SERVER['HTTP_X_FORWARDED_HOST']) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '');
+        return $scheme . '://' . $host . $requestUri;
     }
     
     /**
