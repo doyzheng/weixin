@@ -120,7 +120,7 @@ class Template extends Base
     private function api($url, $params, $method = 'POST')
     {
         if ($method == 'POST') {
-            $result = $this->app->request->post($url, $params);
+            $result = $this->app->request->postJson($url, $params);
         } else {
             $result = $this->app->request->get($url, $params);
         }
