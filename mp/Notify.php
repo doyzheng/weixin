@@ -10,7 +10,7 @@ use doyzheng\weixin\base\NotifyTrait;
  * Class Notify
  * @package doyzheng\weixin\mini
  */
-class Notify extends Module
+class Notify extends Base
 {
     
     use NotifyTrait;

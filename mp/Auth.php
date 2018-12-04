@@ -10,13 +10,18 @@ use doyzheng\weixin\base\Result;
  * Class Auth
  * @package doyzheng\weixin\mp
  */
-class Auth extends Module
+class Auth extends Base
 {
     
     /**
      * @var string 回调状态码
      */
-    public $state = 'doyzhengWeixinAuthState';
+    private $state;
+    
+    /**
+     * @var string 回调地址
+     */
+    private $redirectUri;
     
     // 授权跳转接口
     const API_AUTHORIZE = 'https://open.weixin.qq.com/connect/oauth2/authorize';
@@ -28,22 +33,30 @@ class Auth extends Module
     const API_REFRESH_TOKEN = 'https://api.weixin.qq.com/sns/oauth2/refresh_token/Wechat';
     
     /**
-     *  第一步：用户同意授权，获取code
-     * @param bool   $isUserInfo
-     * @param string $state
+     * 初始化赋值
+     */
+    protected function init()
+    {
+        $this->state       = 'doyzhengWeixinAuthState';
+        $this->redirectUri = Helper::getSelfUrl();
+    }
+    
+    /**
+     * 用户同意授权，获取code
+     * @param bool $isUserInfo
      * @return string
      */
-    public function getCode($isUserInfo = false, $state = '')
+    public function getCode($isUserInfo = false)
     {
-        if (isset($_GET['code']) && isset($_GET['state']) && $_GET['code'] && $_GET['state'] == $state) {
+        if (isset($_GET['code']) && isset($_GET['state']) && $_GET['code'] && $_GET['state'] == $this->state) {
             return $_GET['code'];
         } else {
             $query = [
                 'appid'         => $this->app->accessToken->appid,
-                'redirect_uri'  => Helper::getSelfUrl(),
+                'redirect_uri'  => $this->redirectUri,
                 'response_type' => 'code',
                 'scope'         => $isUserInfo ? 'snsapi_userinfo' : 'snsapi_base',
-                'state'         => $state,
+                'state'         => $this->state,
             ];
             $url   = self::API_AUTHORIZE . '?' . http_build_query($query) . '#wechat_redirect';
             exit(header('location: ' . $url));
@@ -51,28 +64,14 @@ class Auth extends Module
     }
     
     /**
-     * 第二步：通过code换取网页授权access_token
-     * @param bool $isUserInfo
-     * @return array|mixed
-     */
-    public function getToken($isUserInfo = false)
-    {
-        $code = $this->getCode($isUserInfo, $this->state);
-        if (empty($code)) {
-            return $this->app->exception->error('获取code失败');
-        }
-        return $this->getTokenByCode($code);
-    }
-    
-    /**
-     * 第三步：刷新access_token（如果需要）
+     * 刷新access_token（如果需要）
      * @param $refreshToken
      * @return array|mixed
      */
     public function refreshToken($refreshToken)
     {
         $query = [
-            'appid'         => $this->accessToken->appid,
+            'appid'         => $this->app->accessToken->appid,
             'grant_type'    => 'refresh_token',
             'refresh_token' => $refreshToken
         ];
@@ -80,28 +79,23 @@ class Auth extends Module
     }
     
     /**
-     * 第四步：拉取用户信息(需scope为 snsapi_userinfo)
+     * 获取用户信息(需scope为 snsapi_userinfo)
      * @param bool $isUserInfo
-     * @return array|mixed
+     * @return Result
      */
     public function getUserInfo($isUserInfo = false)
     {
-        $result = $this->getToken($isUserInfo);
-        $query  = [
+        $code   = $this->getCode($isUserInfo);
+        $result = $this->getTokenByCode($code);
+        if (!$result) {
+            return $this->app->exception->error('code换获取access_token失败');
+        }
+        $query = [
             'access_token' => $result['access_token'],
             'openid'       => $result['openid'],
             'lang'         => 'zh_CN'
         ];
         return $this->api(self::API_USER_INFO, $query);
-    }
-    
-    /**
-     * 重定向到来源页
-     */
-    public function redirect()
-    {
-        $arr = explode('?', Helper::getSelfUrl());
-        exit(header('location: ' . array_shift($arr)));
     }
     
     /**
@@ -121,18 +115,49 @@ class Auth extends Module
     }
     
     /**
+     * 重定向到来源页
+     */
+    public function redirect()
+    {
+        $arr = explode('?', Helper::getSelfUrl());
+        exit(header('location: ' . array_shift($arr)));
+    }
+    
+    /**
+     * 设置回调状态码
+     * @param $value
+     * @return $this
+     */
+    public function setState($value)
+    {
+        $this->state = $value;
+        return $this;
+    }
+    
+    /**
+     * 设置回调地址
+     * @param $uri
+     * @return $this
+     */
+    public function setRedirectUri($uri)
+    {
+        $this->redirectUri = $uri;
+        return $this;
+    }
+    
+    /**
      * 统一调用接口方法
      * @param $url
      * @param $query
-     * @return array
+     * @return Result
      */
     private function api($url, $query)
     {
         $result = $this->app->request->get($url, $query);
-        if ($result->errCode && $result->errMsg) {
-            return $this->app->exception->request($result->errMsg, $result->errCode);
+        if ($result->errmsg && $result->errcode) {
+            return $this->app->exception->request($result->errmsg, $result->errcode);
         }
-        return $result->data();
+        return $result;
     }
     
 }

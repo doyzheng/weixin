@@ -10,7 +10,7 @@ use doyzheng\weixin\base\NotifyTrait;
  * @package doyzheng\weixin\mp\js
  * @link    https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141013
  */
-class Menu extends Module
+class Menu extends Base
 {
     
     // 点击菜单拉取消息时的事件推送
@@ -38,6 +38,32 @@ class Menu extends Module
     const API_DELETE = 'https://api.weixin.qq.com/cgi-bin/menu/delete?access_token=';
     
     use NotifyTrait;
+    
+    /**
+     * @return array
+     */
+    public function demo()
+    {
+        return $this->create([
+            [
+                'name'       => '扫码',
+                'sub_button' => [
+                    [
+                        'name'       => '扫码带提示',
+                        'type'       => 'scancode_waitmsg',
+                        'key'        => 'rselfmenu_0_0',
+                        'sub_button' => []
+                    ],
+                    [
+                        ''           => '扫码推事件',
+                        'type'       => 'scancode_push',
+                        'key'        => 'rselfmenu_0_1',
+                        'sub_button' => []
+                    ]
+                ],
+            ],
+        ]);
+    }
     
     /**
      * 创建菜单
@@ -95,17 +121,17 @@ class Menu extends Module
      * @param array  $params
      * @return array
      */
-    public function api($url, $method = 'GET', $params = [])
+    private function api($url, $method = 'GET', $params = [])
     {
         if ($method == 'GET') {
             $result = $this->app->request->get($url);
         } else {
-            $result = $this->app->request->post($url, $params);
+            $result = $this->app->request->postJson($url, $params);
         }
-        if ($result->errMsg && $result->errCode) {
-            return $this->app->exception->request($result->errMsg, $result->errCode);
+        if ($result->errmsg && $result->errcode) {
+            return $this->app->exception->request($result->errmsg, $result->errcode);
         }
-        return $result->data();
+        return $result;
     }
     
 }

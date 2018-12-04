@@ -9,7 +9,7 @@ use doyzheng\weixin\base\Helper;
  * Class Receive
  * @package doyzheng\weixin\mp
  */
-class Receive extends Module
+class Receive extends Base
 {
     
     /**

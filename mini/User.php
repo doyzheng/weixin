@@ -2,13 +2,11 @@
 
 namespace doyzheng\weixin\mini;
 
-use doyzheng\weixin\base\BaseWeixin;
-
 /**
  * Class User
  * @package doyzheng\weixin\mini
  */
-class User extends BaseWeixin
+class User extends Base
 {
     
     /**
@@ -22,22 +20,19 @@ class User extends BaseWeixin
      * @param $code
      * @return array
      */
-    public function jscode2session($code)
+    public function code2session($code)
     {
         $params = [
-            'appid'      => $this->accessToken->appid,
-            'secret'     => $this->accessToken->secret,
+            'appid'      => $this->app->accessToken->appid,
+            'secret'     => $this->app->accessToken->secret,
             'js_code'    => $code,
             'grant_type' => 'authorization_code',
         ];
-        $result = $this->request->getJson($this->apiUrl, $params);
-        if (!empty($result['openid']) && !empty($result['session_key'])) {
-            return $result;
+        $result = $this->app->request->get($this->apiUrl, $params);
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        if (isset($result['errcode']) && $result['errcode'] != '0') {
-            return $this->exception->error($result['errmsg'], $result['errcode']);
-        }
-        return $this->exception->error('获取session_key失败');
+        return $result->data();
     }
     
 }

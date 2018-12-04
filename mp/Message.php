@@ -8,7 +8,7 @@ use doyzheng\weixin\base\Helper;
  * Class Message
  * @package doyzheng\weixin\mp
  */
-class Message extends Module
+class Message extends Base
 {
     
     // 文本消息

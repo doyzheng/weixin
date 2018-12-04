@@ -2,12 +2,10 @@
 
 namespace doyzheng\weixin\base;
 
-use doyzheng\weixin\Weixin;
-
 /**
  * 容器类
  * Class Container
- * @package doyzheng\weixin\core
+ * @package doyzheng\weixin\base
  */
 class Container
 {
@@ -30,13 +28,13 @@ class Container
     public $config = [];
     
     /**
-     * @var Weixin
+     * @var object
      */
     public $weixin;
     
     /**
      * Container constructor.
-     * @param Weixin $weixin
+     * @param object $weixin
      * @param array  $classMap
      * @param array  $config 全局配置
      */
@@ -97,8 +95,8 @@ class Container
     
     /**
      * 扩展一个新实例
-     * @param string $class
-     * @param array $class
+     * @param string $name
+     * @param mixed  $class
      * @return bool
      */
     public function extend($name, $class)

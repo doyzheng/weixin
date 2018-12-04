@@ -18,6 +18,16 @@ class Request extends BaseObject implements RequestInterface
     public $history = [];
     
     /**
+     *
+     */
+    public function init()
+    {
+        if (!extension_loaded('curl')) {
+            $this->app->exception->error('The curl extension is not open');
+        }
+    }
+    
+    /**
      * post方式请求
      * @param string $url
      * @param mixed  $data
@@ -41,6 +51,7 @@ class Request extends BaseObject implements RequestInterface
     }
     
     /**
+     * post方式发送json格式数据
      * @param string $url
      * @param array  $data
      * @param array  $options
@@ -52,6 +63,7 @@ class Request extends BaseObject implements RequestInterface
     }
     
     /**
+     * post方式发送Xml格式数据
      * @param string $url
      * @param array  $data
      * @param array  $options
@@ -95,7 +107,7 @@ class Request extends BaseObject implements RequestInterface
         curl_setopt_array($ch, $options);
         $content = curl_exec($ch);
         $error   = curl_error($ch);
-        $result  = new Result(curl_getinfo($ch), $content);
+        $result  = new Result($content, curl_getinfo($ch));
         $this->after($url, $options, $result, $ch);
         curl_close($ch);
         if ($error) {
@@ -121,7 +133,7 @@ class Request extends BaseObject implements RequestInterface
      */
     public function before($url, $options)
     {
-    
+        
     }
     
     /**
@@ -135,17 +147,33 @@ class Request extends BaseObject implements RequestInterface
     {
         $data = [
             'url'     => $url,
-            'options' => $options,
+            'options' => $this->curlOption2name($options),
             'result'  => [
-                'content' => $result->content,
-                'data'    => $result->data(),
-                'info'    => $result->info->all(),
+                'content'  => $result->getContent(),
+                'curlInfo' => json_encode($result->getCurlInfo()->getData(), true),
+                'data'     => $result->getData(),
             ]
         ];
         // 记录请求历史
         $this->history[] = $data;
         // 写请求日志
         $this->app->log->request($data);
+    }
+    
+    /**
+     * curl参数转换为常量名称
+     * @param array $options
+     * @return array
+     */
+    private function curlOption2name($options)
+    {
+        $def      = get_defined_constants(true);
+        $curlList = array_flip($def['curl']);
+        $list     = [];
+        foreach ($options as $name => $val) {
+            $list[$curlList[$name]] = $val;
+        }
+        return $list;
     }
     
 }

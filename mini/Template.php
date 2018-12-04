@@ -2,13 +2,11 @@
 
 namespace doyzheng\weixin\mini;
 
-use doyzheng\weixin\base\BaseWeixin;
-
 /**
  * Class Template
  * @package doyzheng\weixin\mini
  */
-class Template extends BaseWeixin
+class Template extends Base
 {
     
     /**
@@ -27,16 +25,16 @@ class Template extends BaseWeixin
      */
     public function send($openid, $templateId, $formId, $data, $extra = [])
     {
-        $url    = $this->url . $this->accessToken;
+        $url    = $this->url . $this->getAccessToken();
         $params = array_merge($extra, [
             'touser'      => $openid,
             'template_id' => $templateId,
             'form_id'     => $formId,
             'data'        => $data,
         ]);
-        $result = $this->request->postJson($url, $params);
-        if (isset($result['errcode']) && $result['errcode'] != '0') {
-            return $this->exception->error($result['errmsg'], $result['errcode']);
+        $result = $this->app->request->postJson($url, $params);
+        if ($result->errMsg && $result->errCode) {
+            return $this->app->exception->request($result->errMsg, $result->errCode);
         }
         return true;
     }

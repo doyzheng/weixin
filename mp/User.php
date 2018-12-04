@@ -2,13 +2,15 @@
 
 namespace doyzheng\weixin\mp;
 
+use doyzheng\weixin\base\Result;
+
 /**
  * 用户管理
  * Class User
  * @package doyzheng\weixin\mp
  *
  */
-class User extends Module
+class User extends Base
 {
     
     /**
@@ -28,7 +30,7 @@ class User extends Module
     /**
      * 获取微信用户详细信息
      * @param $openid
-     * @return array
+     * @return Result
      */
     public function getInfo($openid)
     {
@@ -43,7 +45,7 @@ class User extends Module
     /**
      * 批量获取用户信息
      * @param $openList
-     * @return array|mixed
+     * @return Result|mixed
      */
     public function batchGet($openList)
     {
@@ -62,7 +64,7 @@ class User extends Module
      * 设置用户备注名
      * @param $openid
      * @param $remark
-     * @return array|mixed
+     * @return Result|mixed
      */
     public function updateRemark($openid, $remark)
     {
@@ -77,7 +79,7 @@ class User extends Module
     /**
      * 获取用户列表
      * @param $nextOpenid
-     * @return array|mixed
+     * @return Result|mixed
      */
     public function getList($nextOpenid = '')
     {
@@ -92,7 +94,7 @@ class User extends Module
      * @param string $url
      * @param array  $params
      * @param string $method
-     * @return array|mixed
+     * @return Result|mixed
      */
     private function api($url, $params, $method = 'GET')
     {
@@ -101,10 +103,10 @@ class User extends Module
         } else {
             $result = $this->app->request->postJson($url, $params);
         }
-        if ($result->errMsg && $result->errCode) {
-            return $this->app->exception->request($result->errMsg, $result->errCode);
+        if ($result->errmsg && $result->errcode) {
+            return $this->app->exception->request($result->errmsg, $result->errcode);
         }
-        return $result->data();
+        return $result;
     }
     
 }

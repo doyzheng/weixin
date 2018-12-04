@@ -11,7 +11,7 @@ abstract class BaseModule extends BaseObject
 {
     
     /**
-     * 工厂方法（创建当前模块下实例）
+     * 工厂方法
      * @param $name
      * @return mixed|null
      */
@@ -34,15 +34,6 @@ abstract class BaseModule extends BaseObject
         }
         
         return parent::__get($name);
-    }
-    
-    /**
-     * 获取接口访问token
-     * @return string
-     */
-    public function getAccessToken($isRefresh = false)
-    {
-        return $this->app->accessToken->getToken($isRefresh);
     }
     
 }

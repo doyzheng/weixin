@@ -7,7 +7,7 @@ namespace doyzheng\weixin\mini;
  * 二维码/小程序码
  * @package doyzheng\weixin\mini
  */
-class Qrcode extends Module
+class Qrcode extends Base
 {
     
     const API_URL_GET = 'https://api.weixin.qq.com/wxa/getwxacode?access_token=';

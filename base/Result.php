@@ -2,174 +2,88 @@
 
 namespace doyzheng\weixin\base;
 
-use doyzheng\weixin\base\interfaces\ResultInterface;
-
 /**
  * 接口返回接口解析类
  * Class Result
  * @package doyzheng\weixin\base
- * @property int    $errCode
- * @property string $errMsg
- * @property string $returnCode
- * @property string $returnMsg
- * @property string $resultCode
+ * @property int    $errcode
+ * @property string $errmsg
+ * @property string $return_code
+ * @property string $return_msg
+ * @property string $result_code
  */
-class Result implements ResultInterface
+class Result extends BaseArrayAccess
 {
     
     /**
      * 接口返回原内容
      * @var string
      */
-    public $content;
+    private $_content;
     
     /**
      * curl请求信息
      * @var CurlInfo
      */
-    public $info;
-    
-    /**
-     * 解析后的数据
-     * @var mixed
-     */
-    private $_data;
-    
-    /**
-     * 是否解析过
-     * @var bool
-     */
-    private $_isParse;
-    
-    /**
-     * @var array 属性对照表
-     */
-    private $_fieldWords = [
-        'errCode'    => 'errcode',
-        'errMsg'     => 'errmsg',
-        'returnCode' => 'return_code',
-        'returnMsg'  => 'return_msg',
-        'resultCode' => 'result_code',
-    ];
+    private $_curlInfo;
     
     /**
      * Result constructor.
-     * @param array  $curlInfo
      * @param string $content
+     * @param array  $curlInfo
      */
-    public function __construct($curlInfo, $content)
+    public function __construct($content, $curlInfo)
     {
-        $this->info    = new CurlInfo($curlInfo);
-        $this->content = $content;
+        $this->_content  = $content;
+        $this->_curlInfo = new CurlInfo($curlInfo);
+        $this->setData($this->parseContent($content));
+    }
+    
+    /**
+     * 返回请求结果原内容
+     * @return string
+     */
+    public function getContent()
+    {
+        return $this->_content;
+    }
+    
+    /**
+     * 当结果当做字符串时直接返回原内容
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->_content;
+    }
+    
+    /**
+     * 返回curl信息
+     * @return CurlInfo
+     */
+    public function getCurlInfo()
+    {
+        return $this->_curlInfo;
     }
     
     /**
      * 自动解析接口返回的内容
-     * @return array|null
+     * @param string $content
+     * @return array
      */
-    public function parseContent()
+    protected function parseContent($content)
     {
-        if ($this->info->contentType == 'json') {
-            return $this->parseJson();
+        if ($this->getCurlInfo()->contentType == 'json') {
+            return Helper::jsonDecode($content);
         }
-        if ($this->info->contentType == 'xml') {
-            return $this->parseXml();
+        if ($this->getCurlInfo()->contentType == 'xml') {
+            return Helper::xml2array($content);
         }
         // 最后使用json方式解析
-        if ($data = $this->parseJson()) {
+        if ($data = Helper::jsonDecode($content)) {
             return $data;
         }
-        return null;
-    }
-    
-    /**
-     * 解析json格式字符串
-     * @return array
-     */
-    public function parseJson()
-    {
-        return Helper::jsonDecode($this->content);
-    }
-    
-    /**
-     * 解析Xml格式字符串
-     * @return array
-     */
-    public function parseXml()
-    {
-        return Helper::jsonDecode($this->content);
-    }
-    
-    /**
-     * @param string $name
-     * @return mixed
-     */
-    public function __get($name)
-    {
-        return $this->data($name);
-    }
-    
-    /**
-     * 获取解析后的数据
-     * @param null $name
-     * @return array|string|null
-     */
-    public function data($name = null)
-    {
-        if (!$this->_isParse) {
-            $this->_data    = $this->parseContent();
-            $this->_isParse = true;
-        }
-        if ($name === null) {
-            return $this->_data;
-        }
-        if (!is_array($this->_data) || !$name) {
-            return null;
-        }
-        if (isset($this->_fieldWords[$name])) {
-            $name = $this->_fieldWords[$name];
-        }
-        if (isset($this->_data[$name])) {
-            return $this->_data[$name];
-        }
-        return null;
-    }
-    
-    /**
-     * @param mixed $offset
-     * @return bool
-     */
-    public function offsetExists($offset)
-    {
-        return $this->data($offset) !== null;
-    }
-    
-    /**
-     * @param mixed $offset
-     * @return mixed
-     */
-    public function offsetGet($offset)
-    {
-        return $this->data($offset);
-    }
-    
-    /**
-     * @param mixed $offset
-     * @param mixed $value
-     */
-    public function offsetSet($offset, $value)
-    {
-        $this->_data[$offset] = $value;
-    }
-    
-    /**
-     * @param mixed $offset
-     */
-    public function offsetUnset($offset)
-    {
-        if (isset($this->_data[$offset])) {
-            unset($this->_data[$offset]);
-        }
+        return [];
     }
     
 }

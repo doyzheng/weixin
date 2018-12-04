@@ -3,6 +3,7 @@
 namespace doyzheng\weixin\mp;
 
 use doyzheng\weixin\base\Helper;
+use doyzheng\weixin\base\Result;
 
 /**
  * 永久素材
@@ -10,11 +11,11 @@ use doyzheng\weixin\base\Helper;
  * @package doyzheng\weixin\mp
  * @link    https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738729
  */
-class Material extends Module
+class Material extends Base
 {
     
     // 获取永久素材 GET
-    const API_GET_MATERIAL = 'https://api.weixin.qq.com/cgi-bin/material/get_material';
+    const API_GET_MATERIAL = 'https://api.weixin.qq.com/cgi-bin/material/get_material?access_token=';
     // 获取素材总数 GET
     const API_GET_MATERIAL_COUNT = 'https://api.weixin.qq.com/cgi-bin/material/get_materialcount';
     // 新增其他类型永久素材  POST
@@ -31,9 +32,23 @@ class Material extends Module
     const API_UPDATE_NEWS = 'https://api.weixin.qq.com/cgi-bin/material/update_news?access_token=';
     
     /**
+     * 获取永久素材
+     * @param $mediaId
+     * @return Result
+     */
+    public function get($mediaId)
+    {
+        $url   = self::API_GET_MATERIAL . $this->getAccessToken();
+        $query = [
+            'media_id'     => $mediaId,
+        ];
+        return $this->api($url, $query);
+    }
+    
+    /**
      * 新增永久图文素材
      * @param $params
-     * @return array|string
+     * @return Result
      */
     public function addNews($params)
     {
@@ -52,23 +67,8 @@ class Material extends Module
     }
     
     /**
-     * 获取永久素材
-     * @param $mediaId
-     * @return string
-     */
-    public function get($mediaId)
-    {
-        $url   = self::API_GET_MATERIAL;
-        $query = [
-            'access_token' => $this->getAccessToken(),
-            'media_id'     => $mediaId,
-        ];
-        return $this->api($url, $query, 'GET');
-    }
-    
-    /**
      * 获取素材总数
-     * @return array|string
+     * @return Result
      */
     public function getCount()
     {
@@ -84,7 +84,7 @@ class Material extends Module
      * @param string $type
      * @param string $offset
      * @param string $count
-     * @return array|string
+     * @return Result
      */
     public function getList($type = "image", $offset = '0', $count = '20')
     {
@@ -100,7 +100,7 @@ class Material extends Module
     /**
      * 删除永久素材
      * @param $mediaId
-     * @return array|string
+     * @return Result
      */
     public function del($mediaId)
     {
@@ -114,7 +114,7 @@ class Material extends Module
     /**
      * 修改永久图文素材
      * @param $params
-     * @return array|string
+     * @return Result
      */
     public function updateNews($params)
     {
@@ -140,19 +140,19 @@ class Material extends Module
      * @param string $url
      * @param array  $data
      * @param string $method
-     * @return array|string
+     * @return Result
      */
     private function api($url, $data, $method = 'POST')
     {
         if ($method == "POST") {
-            $result = $this->app->request->post($url, $data);
+            $result = $this->app->request->postJson($url, $data);
         } else {
             $result = $this->app->request->get($url, $data);
         }
         if ($result->errMsg && $result->errCode) {
             return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result->data();
+        return $result;
     }
     
     /**
@@ -160,7 +160,7 @@ class Material extends Module
      * @param string $filename
      * @param string $type
      * @param array  $params
-     * @return array|string
+     * @return Result
      */
     private function upload($filename, $type, $params = [])
     {
@@ -179,13 +179,13 @@ class Material extends Module
         if ($result->errMsg && $result->errCode) {
             return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result->data();
+        return $result;
     }
     
     /**
      * 上传永久图片素材
      * @param string $filename
-     * @return array|string
+     * @return Result
      */
     public function uploadImage($filename)
     {
@@ -195,7 +195,7 @@ class Material extends Module
     /**
      * 上传永久语音素材
      * @param string $filename
-     * @return array
+     * @return Result
      */
     public function uploadVoice($filename)
     {
@@ -207,7 +207,7 @@ class Material extends Module
      * @param string $filename
      * @param string $title
      * @param string $introduction
-     * @return array|string
+     * @return Result
      */
     public function uploadVideo($filename, $title, $introduction)
     {
@@ -222,7 +222,7 @@ class Material extends Module
     /**
      * 上传永久图片素材
      * @param string $filename
-     * @return array
+     * @return Result
      */
     public function uploadThumb($filename)
     {
@@ -232,7 +232,7 @@ class Material extends Module
     /**
      * 上传图文消息内的图片获取URL
      * @param $filename
-     * @return array|string
+     * @return Result
      */
     public function uploadImg($filename)
     {
@@ -246,7 +246,7 @@ class Material extends Module
         if ($result->errMsg && $result->errCode) {
             return $this->app->exception->request($result->errMsg, $result->errCode);
         }
-        return $result->data();
+        return $result;
     }
     
 }

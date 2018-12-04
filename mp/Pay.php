@@ -10,7 +10,7 @@ use doyzheng\weixin\base\Helper;
  * @package doyzheng\weixin\mini\payment
  * @link    https://pay.weixin.qq.com/wiki/doc/api/wxa/wxa_api.php?chapter=9_1
  */
-class Pay extends Module
+class Pay extends Base
 {
     
     /**
@@ -297,10 +297,10 @@ class Pay extends Module
         $params['sign'] = Helper::makeSignMd5($params, $this->key);
         $result         = $this->app->request->postXml($url, $params, $options);
         
-        if ($result->returnCode != 'SUCCESS') {
-            $this->app->exception->request($result->returnCode, 0);
+        if ($result->result_code != 'SUCCESS') {
+            $this->app->exception->request($result->return_msg, 0);
         }
-        return $result->data() ? $result->data() : $result->content;
+        return $result->toArray() ? $result : $result->getContent();
     }
     
 }

@@ -5,6 +5,7 @@ namespace doyzheng\weixin\base;
 use doyzheng\weixin\Weixin;
 
 /**
+ * 类库基类,所有扩展类都应该继承
  * Class BaseObject
  * @package doyzheng\weixin\base
  */
@@ -18,6 +19,7 @@ abstract class BaseObject
     
     /**
      * BaseObject constructor.
+     * @param array $config
      */
     public function __construct($config = [])
     {
@@ -28,7 +30,7 @@ abstract class BaseObject
     /**
      * 初始化
      */
-    public function init()
+    protected function init()
     {
     }
     
@@ -76,8 +78,9 @@ abstract class BaseObject
         return false;
     }
     
+    
     /**
-     * @param string $name
+     * @param $name
      */
     public function __unset($name)
     {
@@ -85,7 +88,7 @@ abstract class BaseObject
         if (method_exists($this, $setter)) {
             $this->$setter($name, null);
         }
-        return $this->app->exception->unknownProperty('UnSetting unknown property:' . get_class($this) . '::' . $name);
+        $this->app->exception->unknownProperty('UnSetting unknown property:' . get_class($this) . '::' . $name);
     }
     
     /**
@@ -95,7 +98,7 @@ abstract class BaseObject
      */
     public function __call($name, $params)
     {
-        return $this->app->exception->unknownMethod('Calling unknown method: ' . get_class($this) . "::$name()");
+        $this->app->exception->unknownMethod('Calling unknown method: ' . get_class($this) . "::$name()");
     }
     
     /**

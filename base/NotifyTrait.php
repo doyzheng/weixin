@@ -14,7 +14,7 @@ trait NotifyTrait
      * 成功返回
      * @return bool
      */
-    public function success()
+    protected function success()
     {
         $data = [
             'return_code' => 'SUCCESS',
@@ -28,7 +28,7 @@ trait NotifyTrait
      * @param $msg
      * @return bool
      */
-    public function fail($msg)
+    protected function fail($msg)
     {
         $data = [
             'return_code' => 'FAIL',
@@ -42,7 +42,7 @@ trait NotifyTrait
      * @param array $data
      * @return bool
      */
-    public function replyWeixin($data)
+    protected function replyWeixin($data)
     {
         return Helper::array2xml($data);
     }

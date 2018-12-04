@@ -10,7 +10,7 @@ use doyzheng\weixin\base\Helper;
  * @package doyzheng\weixin\mp
  * @link    https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738726
  */
-class Media extends Module
+class Media extends Base
 {
     
     /**
@@ -44,10 +44,10 @@ class Media extends Module
     {
         $url    = self::API_GET . $this->app->accessToken;
         $result = $this->app->request->get($url, ['media_id' => $mediaId]);
-        if ($result->errMsg && $result->errCode) {
-            return $this->app->exception->request($result->errMsg, $result->errCode);
+        if ($result->errmsg && $result->errcode) {
+            return $this->app->exception->request($result->errmsg, $result->errcode);
         }
-        return $result->data();
+        return $result;
     }
     
     /**
@@ -77,8 +77,8 @@ class Media extends Module
         if (isset($tmpFile) && is_file($tmpFile)) {
             @unlink($tmpFile);
         }
-        if ($result->errMsg && $result->errCode) {
-            return $this->app->exception->request($result->errMsg, $result->errCode);
+        if ($result->errmsg && $result->errcode) {
+            return $this->app->exception->request($result->errmsg, $result->errcode);
         }
         return $result->data();
     }

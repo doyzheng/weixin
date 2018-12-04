@@ -12,6 +12,7 @@ use doyzheng\weixin\base\exception\WxUnknownPropertyException;
 use doyzheng\weixin\base\interfaces\ExceptionInterface;
 
 /**
+ * 所有异常都通过这个类来处理
  * Class Exception
  * @package doyzheng\weixin\core
  */
@@ -21,6 +22,7 @@ class Exception extends BaseObject implements ExceptionInterface
     /**
      * 抛异常
      * @param $exception
+     * @return mixed
      */
     private function throwException($exception)
     {
@@ -28,70 +30,77 @@ class Exception extends BaseObject implements ExceptionInterface
         if ($this->app->appDebug) {
             throw $exception;
         }
+        return null;
     }
     
     /**
      * 不存在的类
      * @param string $message
      * @param int    $code
+     * @return mixed
      */
     public function unknownClass($message = "", $code = 0)
     {
-        $this->throwException(new WxUnknownClassException($message, $code));
+        return $this->throwException(new WxUnknownClassException($message, $code));
     }
     
     /**
      * 不存在的类方法
      * @param string $message
      * @param int    $code
+     * @return mixed
      */
     public function unknownMethod($message = "", $code = 0)
     {
-        $this->throwException(new WxUnknownMethodException($message, $code));
+        return $this->throwException(new WxUnknownMethodException($message, $code));
     }
     
     /**
      * 不存在的类属性
      * @param string $message
      * @param int    $code
+     * @return mixed
      */
     public function unknownProperty($message = "", $code = 0)
     {
-        $this->throwException(new WxUnknownPropertyException($message, $code));
+        return $this->throwException(new WxUnknownPropertyException($message, $code));
     }
     
     /**
      * 无效的参数
      * @param string $message
      * @param int    $code
+     * @return mixed
      */
     public function invalidArgument($message = "", $code = 0)
     {
-        $this->throwException(new WxInvalidArgumentException($message, $code));
+        return $this->throwException(new WxInvalidArgumentException($message, $code));
     }
     
     /**
      * 业务错误
      * @param string $message
      * @param int    $code
+     * @return mixed
      */
     public function error($message = "", $code = 0)
     {
-        $this->throwException(new WxErrorException($message, $code));
+        return $this->throwException(new WxErrorException($message, $code));
     }
     
     /**
      * 请求接口时错误
      * @param string $message
      * @param int    $code
+     * @return mixed
      */
     public function request($message = "", $code = 0)
     {
-        $data = $this->app->request->history;
-        $this->app->log->request($data);
+        $this->app->log->request($this->app->request->history);
         if ($this->app->appDebug) {
             throw new WxRequestException($message, $code);
         }
+        return null;
     }
     
     /**

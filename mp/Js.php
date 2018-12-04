@@ -8,31 +8,40 @@ use doyzheng\weixin\base\Helper;
  * 微信JsApi
  * @package doyzheng\weixin\mp
  */
-class Js extends Module
+class Js extends Base
 {
-
+    
     /**
      * @var string
      */
-    protected $url;
-
+    private $url;
+    
     /**
      * Ticket cache prefix.
      * @var string
      */
-    protected $cachePrefix = 'doyzheng.weixin.jsapi_ticket.';
-
+    private $cachePrefix;
+    
     /**
      * Api of ticket.
      */
     const API_TICKET = 'https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=';
-
+    
+    /**
+     * 获取已经设置的jsApi页面Url
+     */
+    public function init()
+    {
+        $this->url         = Helper::getSelfUrl();
+        $this->cachePrefix = 'doyzheng.weixin.jsapi_ticket.';
+    }
+    
     /**
      * 获取jsApi配置
      * @param array $APIs
-     * @param bool $debug
-     * @param bool $beta
-     * @param bool $json
+     * @param bool  $debug
+     * @param bool  $beta
+     * @param bool  $json
      * @return array|string
      */
     public function config(array $APIs, $debug = false, $beta = false, $json = true)
@@ -45,19 +54,19 @@ class Js extends Module
         $config      = array_merge($base, $signPackage, ['jsApiList' => $APIs]);
         return $json ? json_encode($config) : $config;
     }
-
+    
     /**
      * 获取jsApi配置
      * @param array $APIs
-     * @param bool $debug
-     * @param bool $beta
+     * @param bool  $debug
+     * @param bool  $beta
      * @return array|string
      */
     public function getConfigArray(array $APIs = [], $debug = false, $beta = false)
     {
         return $this->config($APIs, $debug, $beta, false);
     }
-
+    
     /**
      * 获取jsApi ticket
      * @param bool $forceRefresh
@@ -73,23 +82,23 @@ class Js extends Module
         $result = $this->app->request->get(self::API_TICKET . $this->app->accessToken, [
             'type' => 'jsapi'
         ]);
-        if ($result->errMsg && $result->errCode) {
-            $this->app->exception->request($result->errMsg, $result->errCode);
+        if ($result->errmsg && $result->errcode) {
+            $this->app->exception->request($result->errmsg, $result->errcode);
         }
-        $this->app->cache->set($key, $result->data('ticket'), $result->data('expires_in') - 500);
-        return $result->data('ticket');
+        $this->app->cache->set($key, $result->ticket, $result->expires_in - 500);
+        return $result->ticket;
     }
-
+    
     /**
      * 构造签名
      * @param string $url
      * @param string $nonce
-     * @param int $timestamp
+     * @param int    $timestamp
      * @return array
      */
-    public function signature($url = null, $nonce = null, $timestamp = null)
+    private function signature($url = null, $nonce = null, $timestamp = null)
     {
-        $url       = $url ? $url : $this->getUrl();
+        $url       = $url ? $url : $this->url;
         $nonce     = $nonce ? $nonce : Helper::generateRandStr(10);
         $timestamp = $timestamp ? $timestamp : time();
         $ticket    = $this->ticket();
@@ -102,7 +111,7 @@ class Js extends Module
         ];
         return $sign;
     }
-
+    
     /**
      * 拼接签名字符串参数
      * @param string $ticket
@@ -111,11 +120,11 @@ class Js extends Module
      * @param string $url
      * @return string
      */
-    public function getSignature($ticket, $nonce, $timestamp, $url)
+    private function getSignature($ticket, $nonce, $timestamp, $url)
     {
         return sha1("jsapi_ticket={$ticket}&noncestr={$nonce}&timestamp={$timestamp}&url={$url}");
     }
-
+    
     /**
      * 设置使用jsApi页面Url
      * @param string $url
@@ -123,22 +132,19 @@ class Js extends Module
      */
     public function setUrl($url)
     {
-        if ($url) {
-            $this->url = $url;
-        }
+        $this->url = $url;
         return $this;
     }
-
+    
     /**
-     * 获取已经设置的jsApi页面Url
-     * @return string
+     * 设置缓存前缀
+     * @param $prefix
+     * @return $this
      */
-    public function getUrl()
+    public function setCachePrefix($prefix)
     {
-        if ($this->url) {
-            return $this->url;
-        }
-        return Helper::getSelfUrl();
+        $this->cachePrefix = $prefix;
+        return $this;
     }
-
+    
 }

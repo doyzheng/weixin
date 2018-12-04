@@ -3,13 +3,14 @@
 namespace doyzheng\weixin\mp;
 
 use doyzheng\weixin\base\Helper;
+use doyzheng\weixin\base\Result;
 
 /**
  * Class Template
  * @package doyzheng\weixin\mp
  * @link    https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1433751277
  */
-class Template extends Module
+class Template extends Base
 {
     
     // 设置所属行业
@@ -29,7 +30,7 @@ class Template extends Module
      * 设置所属行业
      * @param string $industryId1
      * @param string $industryId2
-     * @return array|mixed
+     * @return Result
      */
     public function setIndustry($industryId1, $industryId2)
     {
@@ -43,7 +44,7 @@ class Template extends Module
     
     /**
      * 获取设置的行业信息
-     * @return array|mixed
+     * @return Result
      */
     public function getIndustry()
     {
@@ -53,8 +54,8 @@ class Template extends Module
     
     /**
      * 添加模板
-     * @param $templateIdShort
-     * @return array|mixed
+     * @param string $templateIdShort
+     * @return Result
      */
     public function addTemplate($templateIdShort)
     {
@@ -67,7 +68,7 @@ class Template extends Module
     
     /**
      * 获取模板列表
-     * @return array|mixed
+     * @return Result
      */
     public function getAllPrivateTemplate()
     {
@@ -78,7 +79,7 @@ class Template extends Module
     /**
      * 删除模板
      * @param string $templateId
-     * @return array|mixed
+     * @return Result
      */
     public function delPrivateTemplate($templateId)
     {
@@ -96,7 +97,7 @@ class Template extends Module
      * @param string $url
      * @param array  $data
      * @param array  $extra
-     * @return array|mixed
+     * @return Result
      */
     public function send($openid, $templateId, $url, $data, $extra = [])
     {
@@ -114,19 +115,19 @@ class Template extends Module
      * @param string $url
      * @param array  $params
      * @param string $method
-     * @return array|mixed
+     * @return Result
      */
     private function api($url, $params, $method = 'POST')
     {
         if ($method == 'POST') {
-            $result = $this->app->request->post($url, $params)->parseJson();
+            $result = $this->app->request->post($url, $params);
         } else {
             $result = $this->app->request->get($url, $params);
         }
-        if ($result->errMsg && $result->errCode) {
-            $this->app->exception->request($result->errMsg, $result->errCode);
+        if ($result->errmsg && $result->errcode) {
+            $this->app->exception->request($result->errmsg, $result->errcode);
         }
-        return $result->data();
+        return $result;
     }
     
 }

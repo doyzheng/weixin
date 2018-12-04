@@ -2,7 +2,6 @@
 
 namespace doyzheng\weixin\parking;
 
-use doyzheng\weixin\base\BaseModule;
 use doyzheng\weixin\base\NotifyTrait;
 use doyzheng\weixin\base\Helper;
 
@@ -11,7 +10,7 @@ use doyzheng\weixin\base\Helper;
  * Class Notify
  * @package doyzheng\weixin\parking
  */
-class Notify extends BaseModule
+class Notify extends Base
 {
     
     use NotifyTrait;
