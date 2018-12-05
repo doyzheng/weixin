@@ -147,19 +147,22 @@ class Media extends Base
      */
     public function downloadRemoteFile($url, $filename = '')
     {
-        $extList     = [
+        $extList = [
             'image/jpeg' => 'jpg',
             'image/png'  => 'png'
         ];
-        $result      = $this->app->request->get($url);
-        $contentType = $result->info->contentType;
+        // 暂时禁止记录日志
+        $this->app->log->disable = true;
+        $result                  = $this->app->request->get($url);
+        $this->app->log->disable = false;
+        $contentType             = $result->getCurlInfo()->contentType;
         if (empty($extList[$contentType])) {
             $this->app->exception->error("Unsupported download file type $contentType");
         }
         if (!$filename) {
-            $filename = Helper::mkdir($this->app->runtimePath . '/temp/') . md5($filename . rand()) . '.' . $extList[$contentType];
+            $filename = Helper::mkdir($this->app->runtimePath . '/temp') . '/' . md5($filename . rand()) . '.' . $extList[$contentType];
         }
-        if (@file_put_contents($filename, $result->content)) {
+        if ($filename = Helper::writeFile($filename, $result->content)) {
             return $filename;
         }
         return '';

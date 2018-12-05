@@ -40,6 +40,11 @@ class Weixin
     public $appDebug = false;
     
     /**
+     * @var callable 自定义错误处理
+     */
+    public $errorHandler;
+    
+    /**
      * @var array 核心类
      */
     private $_coreClass = [
@@ -84,7 +89,7 @@ class Weixin
      */
     public static function getVersion()
     {
-        return '1.2.2';
+        return '1.2.4';
     }
     
     /**

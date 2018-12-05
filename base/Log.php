@@ -20,7 +20,7 @@ class Log extends BaseObject implements LogInterface
     /**
      * @var bool 是否禁用日志
      */
-    public $disable = true;
+    public $disable = false;
     
     /**
      * 初始化
@@ -40,7 +40,7 @@ class Log extends BaseObject implements LogInterface
      */
     public function add($type, $data)
     {
-        if ($this->disable != false) {
+        if (!$this->disable) {
             $filename = $this->generateFilename($type);
             $str      = is_file($filename) ? '' : "<?php \n";
             $str      .= "/*-------------------------------" . date('Y-m-d H:i:s') . "-------------------------------*/\n";
@@ -72,20 +72,21 @@ class Log extends BaseObject implements LogInterface
     }
     
     /**
-     * 写访问日志
+     * 写回调通知日志
      * @param string $name
      * @return bool|mixed
      */
-    public function access($name = '')
+    public function notify($message)
     {
-        return $this->add($name ? $name : 'access', [
+        return $this->add('notify', [
             'GET'     => $_GET,
             'POST'    => $_POST,
             'REQUEST' => $_REQUEST,
-            'SERVER'  => $_SERVER,
             'COOKIE'  => $_COOKIE,
             'FILES'   => $_FILES,
+            'SERVER'  => $_SERVER,
             'RAW'     => file_get_contents('php://input'),
+            'REPLY'   => $message,
         ]);
     }
     

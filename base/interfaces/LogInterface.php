@@ -32,10 +32,10 @@ interface LogInterface
     public function error($exception);
     
     /**
-     * 记录访问日志
-     * @param string $name
+     * 回调通知日志
+     * @param string $message
      * @return mixed
      */
-    public function access($name = '');
+    public function notify($message);
     
 }

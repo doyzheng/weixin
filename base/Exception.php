@@ -24,9 +24,50 @@ class Exception extends BaseObject implements ExceptionInterface
      * @param $exception
      * @return mixed
      */
-    private function throwException($exception)
+    public function throwException($exception)
     {
         $this->app->log->error($exception);
+        if ($result = $this->errorHandler($exception)) {
+            return $result;
+        }
+        if ($this->app->appDebug) {
+            throw $exception;
+        }
+        return null;
+    }
+    
+    /**
+     * 请求接口时错误
+     * @param string $message
+     * @param int    $code
+     * @return mixed
+     */
+    public function request($message = "", $code = 0)
+    {
+        $this->app->log->request($this->app->request->history);
+        $exception = new WxRequestException($message, $code);
+        if ($result = $this->errorHandler($exception)) {
+            return $result;
+        }
+        if ($this->app->appDebug) {
+            throw $exception;
+        }
+        return null;
+    }
+    
+    /**
+     * 异步通知数据异常
+     * @param string $message
+     * @param int    $code
+     * @return mixed
+     */
+    public function notify($message = "", $code = 0)
+    {
+        $exception = new WxNotifyException($message, $code);
+        $this->app->log->notify($message);
+        if ($result = $this->errorHandler($exception)) {
+            return $result;
+        }
         if ($this->app->appDebug) {
             throw $exception;
         }
@@ -89,28 +130,18 @@ class Exception extends BaseObject implements ExceptionInterface
     }
     
     /**
-     * 请求接口时错误
-     * @param string $message
-     * @param int    $code
-     * @return mixed
+     * 处理自定义异常
+     * @return bool
      */
-    public function request($message = "", $code = 0)
+    private function errorHandler()
     {
-        $this->app->log->request($this->app->request->history);
-        if ($this->app->appDebug) {
-            throw new WxRequestException($message, $code);
+        // 自定义异常处理
+        if (is_callable($this->app->errorHandler)) {
+            if (call_user_func_array($this->app->errorHandler, func_get_args())) {
+                return true;
+            }
         }
-        return null;
-    }
-    
-    /**
-     * 异步通知数据异常
-     * @param string $message
-     * @param int    $code
-     */
-    public function notify($message = "", $code = 0)
-    {
-        $this->throwException(new WxNotifyException($message, $code));
+        return false;
     }
     
 }

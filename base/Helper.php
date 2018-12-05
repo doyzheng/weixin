@@ -285,6 +285,7 @@ class Helper
     
     /**
      * 获取服务器Ip
+     * @return array|false|string
      */
     public static function getServiceIp()
     {
@@ -334,24 +335,57 @@ class Helper
     
     /**
      * 创建目录
-     * @param $path
-     * @return mixed
+     * @param string $path
+     * @return string
      */
     public static function mkdir($path)
     {
+        $path = static::normalizePath($path);
         if (static::createDirectory($path)) {
-            return realpath($path);
+            return $path;
         }
         return '';
     }
     
     /**
-     * @param      $path
-     * @param int  $mode
-     * @param bool $recursive
+     * 规范目录
+     * @param string $path
+     * @param string $ds
+     * @return string
+     */
+    public static function normalizePath($path, $ds = DIRECTORY_SEPARATOR)
+    {
+        $path = rtrim(strtr($path, '/\\', $ds . $ds), $ds);
+        if (strpos($ds . $path, "{$ds}.") === false && strpos($path, "{$ds}{$ds}") === false) {
+            return $path;
+        }
+        // the path may contain ".", ".." or double slashes, need to clean them up
+        if (strpos($path, "{$ds}{$ds}") === 0 && $ds == '\\') {
+            $parts = [$ds];
+        } else {
+            $parts = [];
+        }
+        foreach (explode($ds, $path) as $part) {
+            if ($part === '..' && !empty($parts) && end($parts) !== '..') {
+                array_pop($parts);
+            } elseif ($part === '.' || $part === '' && !empty($parts)) {
+                continue;
+            } else {
+                $parts[] = $part;
+            }
+        }
+        $path = implode($ds, $parts);
+        return $path === '' ? '.' : $path;
+    }
+    
+    /**
+     * 创建目录
+     * @param string $path
+     * @param int    $mode
+     * @param bool   $recursive
      * @return bool
      */
-    private static function createDirectory($path, $mode = 0777, $recursive = true)
+    public static function createDirectory($path, $mode = 0777, $recursive = true)
     {
         if (is_dir($path)) {
             return true;
@@ -365,6 +399,12 @@ class Helper
             if (!mkdir($path, $mode)) {
                 return false;
             }
+        } catch (\Exception $e) {
+            if (!is_dir($path)) {// https://github.com/yiisoft/yii2/issues/9288
+                return false;
+            }
+        }
+        try {
             return chmod($path, $mode);
         } catch (\Exception $e) {
             return false;
@@ -372,23 +412,30 @@ class Helper
     }
     
     /**
-     * @param $filename
-     * @param $data
-     * @param $flags
-     * @return bool
+     * 写文件
+     * @param string $filename
+     * @param string $data
+     * @param int    $flags
+     * @return string
      */
     public static function writeFile($filename, $data, $flags = 0)
     {
+        $filename = static::normalizePath($filename);
         Helper::mkdir(dirname($filename));
-        return file_put_contents($filename, $data, $flags) != 0;
+        if (file_put_contents($filename, $data, $flags) != 0) {
+            return $filename;
+        }
+        return '';
     }
     
     /**
-     * @param $filename
+     * 读文件
+     * @param string $filename
      * @return string
      */
     public static function readFile($filename)
     {
+        $filename = static::normalizePath($filename);
         if (is_file($filename)) {
             return file_get_contents($filename);
         }

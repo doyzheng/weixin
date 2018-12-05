@@ -10,6 +10,12 @@ interface ExceptionInterface
 {
     
     /**
+     * @param $exception
+     * @return mixed
+     */
+    public function throwException($exception);
+    
+    /**
      * 当调用一个不存在的对象时抛出异常
      * @param string $message
      * @param int    $code
